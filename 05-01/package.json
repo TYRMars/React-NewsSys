@@ -4,7 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "webpack-dev-server --hot --open --content-base ./src/",
+    "deploy": "webpack -p --progress --config webpack.config.js"
   },
   "author": "JonthanZhang",
   "license": "ISC",
@@ -13,6 +15,8 @@
     "babel-preset-react": "^6.24.1",
     "babelify": "^7.3.0",
     "react": "^15.5.4",
-    "react-dom": "^15.5.4"
+    "react-dom": "^15.5.4",
+    "webpack": "^2.5.1",
+    "webpack-dev-server": "^2.4.5"
   }
 }
