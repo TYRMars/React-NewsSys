@@ -2,69 +2,57 @@
 
 ## Methods
 
-### `getOptions`
+### `getLoaderConfig`
 
-Recommended way to retrieve the options of a loader invocation:
+Recommended way to retrieve the loader config:
 
 ```javascript
 // inside your loader
-const options = loaderUtils.getOptions(this);
+config = loaderUtils.getLoaderConfig(this, "myLoader");
 ```
 
-1. If `this.query` is a string:
-	- Tries to parse the query string and returns a new object
-	- Throws if it's not a valid query string
-2. If `this.query` is object-like, it just returns `this.query`
-3. In any other case, it just returns `null`
-
-**Please note:** The returned `options` object is *read-only*. It may be re-used across multiple invocations.
-If you pass it on to another library, make sure to make a *deep copy* of it:
+Tries to read the loader config from the `webpack.config.js` under the given property name (`"myLoader"` in this case) and merges the result with the loader query. For example, if your `webpack.config.js` had this property...
 
 ```javascript
-const options = Object.assign(
-	{},
-	loaderUtils.getOptions(this), // it is safe to pass null to Object.assign()
-	defaultOptions
-);
-// don't forget nested objects or arrays
-options.obj = Object.assign({}, options.obj); 
-options.arr = options.arr.slice();
-someLibrary(options);
-```
-
-[clone-deep](https://www.npmjs.com/package/clone-deep) is a good library to make a deep copy of the options.
-
-#### Options as query strings
-
-If the loader options have been passed as loader query string (`loader?some&params`), the string is parsed by using [`parseQuery`](#parsequery).
-
-### `parseQuery`
-
-Parses a passed string (e.g. `loaderContext.resourceQuery`) as a query string, and returns an object.
-
-``` javascript
-const params = loaderUtils.parseQuery(this.resourceQuery); // resource: `file?param1=foo`
-if (params.param1 === "foo") {
-	// do something
+cheesecakeLoader: {
+	type: "delicious",
+	slices: 4
 }
 ```
 
-The string is parsed like this:
+...and your loader was called with `?slices=8`, `getLoaderConfig(this, "cheesecakeLoader")` would return
+
+```javascript
+{
+	type: "delicious",
+	slices: 8
+}
+```
+
+It is recommended that you use the camelCased loader name as your default config property name.
+
+### `parseQuery`
+
+``` javascript
+var query = loaderUtils.parseQuery(this.query);
+assert(typeof query == "object");
+if(query.flag)
+	// ...
+```
 
 ``` text
-                             -> Error
-?                            -> {}
-?flag                        -> { flag: true }
-?+flag                       -> { flag: true }
-?-flag                       -> { flag: false }
-?xyz=test                    -> { xyz: "test" }
-?xyz=1                       -> { xyz: "1" } // numbers are NOT parsed
-?xyz[]=a                     -> { xyz: ["a"] }
-?flag1&flag2                 -> { flag1: true, flag2: true }
-?+flag1,-flag2               -> { flag1: true, flag2: false }
-?xyz[]=a,xyz[]=b             -> { xyz: ["a", "b"] }
-?a%2C%26b=c%2C%26d           -> { "a,&b": "c,&d" }
-?{data:{a:1},isJSON5:true}   -> { data: { a: 1 }, isJSON5: true }
+null                   -> {}
+?                      -> {}
+?flag                  -> { flag: true }
+?+flag                 -> { flag: true }
+?-flag                 -> { flag: false }
+?xyz=test              -> { xyz: "test" }
+?xyz[]=a               -> { xyz: ["a"] }
+?flag1&flag2           -> { flag1: true, flag2: true }
+?+flag1,-flag2         -> { flag1: true, flag2: false }
+?xyz[]=a,xyz[]=b       -> { xyz: ["a", "b"] }
+?a%2C%26b=c%2C%26d     -> { "a,&b": "c,&d" }
+?{json:5,data:{a:1}}   -> { json: 5, data: { a: 1 } }
 ```
 
 ### `stringifyRequest`
@@ -116,8 +104,8 @@ loaderUtils.stringifyRequest(this, "\\\\network-drive\\test.js");
 Converts some resource URL to a webpack module request.
 
 ```javascript
-const url = "path/to/module.js";
-const request = loaderUtils.urlToRequest(url); // "./path/to/module.js"
+var url = "path/to/module.js";
+var request = loaderUtils.urlToRequest(url); // "./path/to/module.js"
 ```
 
 #### Module URLs
@@ -125,8 +113,8 @@ const request = loaderUtils.urlToRequest(url); // "./path/to/module.js"
 Any URL containing a `~` will be interpreted as a module request. Anything after the `~` will be considered the request path.
 
 ```javascript
-const url = "~path/to/module.js";
-const request = loaderUtils.urlToRequest(url); // "path/to/module.js"
+var url = "~path/to/module.js";
+var request = loaderUtils.urlToRequest(url); // "path/to/module.js"
 ```
 
 #### Root-relative URLs
@@ -134,17 +122,17 @@ const request = loaderUtils.urlToRequest(url); // "path/to/module.js"
 URLs that are root-relative (start with `/`) can be resolved relative to some arbitrary path by using the `root` parameter:
 
 ```javascript
-const url = "/path/to/module.js";
-const root = "./root";
-const request = loaderUtils.urlToRequest(url, root); // "./root/path/to/module.js"
+var url = "/path/to/module.js";
+var root = "./root";
+var request = loaderUtils.urlToRequest(url, root); // "./root/path/to/module.js"
 ```
 
 To convert a root-relative URL into a module URL, specify a `root` value that starts with `~`:
 
 ```javascript
-const url = "/path/to/module.js";
-const root = "~";
-const request = loaderUtils.urlToRequest(url, root); // "path/to/module.js"
+var url = "/path/to/module.js";
+var root = "~";
+var request = loaderUtils.urlToRequest(url, root); // "path/to/module.js"
 ```
 
 ### `interpolateName`
@@ -153,7 +141,7 @@ Interpolates a filename template using multiple placeholders and/or a regular ex
 The template and regular expression are set as query params called `name` and `regExp` on the current loader's context.
 
 ```javascript
-const interpolatedName = loaderUtils.interpolateName(loaderContext, name, options);
+var interpolatedName = loaderUtils.interpolateName(loaderContext, name, options);
 ```
 
 The following tokens are replaced in the `name` parameter:
@@ -216,7 +204,7 @@ loaderUtils.interpolateName(loaderContext, "script-[1].[ext]", { regExp: "page-(
 ### `getHashDigest`
 
 ``` javascript
-const digestString = loaderUtils.getHashDigest(buffer, hashType, digestType, maxLength);
+var digestString = loaderUtils.getHashDigest(buffer, hashType, digestType, maxLength);
 ```
 
 * `buffer` the content that should be hashed

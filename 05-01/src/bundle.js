@@ -9536,7 +9536,7 @@ var ReactDOM = __webpack_require__(80);
 ReactDOM.render(React.createElement(
   'h1',
   null,
-  '\u5F20\u4F73\u6960czxc'
+  'hello world odaf'
 ), document.getElementById('example'));
 
 /***/ }),
