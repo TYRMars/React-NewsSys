@@ -1,7 +1,7 @@
 var React = require('react');
-var ReactDom = require('react-dom');
+var ReactDOM = require('react-dom');
 
-ReactDom.render(
-  <h1>hello World!</h1>
+ReactDOM.render(
+  <h1>张佳楠 zhangjianan</h1>,
   document.getElementById('example')
 );

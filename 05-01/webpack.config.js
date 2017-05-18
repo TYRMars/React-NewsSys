@@ -13,7 +13,11 @@ module.exports = {
         rules: [{
             test: /\.js$/, // test 去判断是否为.js或.jsx,是的话就是进行es6和jsx的编译
             exclude: /(node_modules)/,
-            use: ['babel-loader',]
+            use: [{
+                  loader: 'babel-loader',
+                  //配置参数;
+                  options: { presets: ['es2015','react'] }
+                }],
         }]
     },
 };
