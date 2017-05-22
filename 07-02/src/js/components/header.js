@@ -6,6 +6,6 @@ export default class CompomentHeader extends React.Component{
       <header>
       <h1>这里是表头</h1>
       </header>
-    )
+    );
   }
 }

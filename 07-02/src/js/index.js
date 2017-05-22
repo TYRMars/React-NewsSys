@@ -9,8 +9,7 @@ class Index extends React.Component {
       <CompomentHeader/>
       <h1>页面主题内容</h1>
       </div>
-
-    )
+    );
   }
 }
 
