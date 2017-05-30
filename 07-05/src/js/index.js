@@ -4,6 +4,16 @@ import CompomentHeader from './components/header';
 import CompomentFooter from './components/footer';
 import BodyIndex from './components/bodyIndex';
 class Index extends React.Component {
+
+  componentWillMount(){
+    //定义你的逻辑即可
+    console.log("Index - componentWillMount");
+  }
+
+  componentDidMount(){
+    console.log("Index - componentDidMount");
+  }
+
   render() {
     // var components;
     // if (!denglu) {

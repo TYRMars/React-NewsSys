@@ -1,13 +1,13 @@
 import React from 'react';
 export default class BodyIndex extends React.Component{
 
-  compomentWillMount(){
+  componentWillMount(){
     //定义你的逻辑即可
-    console.log("BodyIndex - compomentWillMount");
+    console.log("BodyIndex - componentWillMount");
   }
 
-  componentDitMount(){
-    console.log("BodyIndex - componentDitMount");
+  componentDidMount(){
+    console.log("BodyIndex - componentDidMount");
   }
 
   render(){
