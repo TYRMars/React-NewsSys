@@ -8,7 +8,6 @@ export default class BodyIndex extends React.Component {
     };//初始化赋值
   }
   render() {
-
     setTimeout(() => {
       //更改state的时候
       this.setState({username: "IMOOC",age:30})
