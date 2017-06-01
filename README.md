@@ -1,9 +1,10 @@
 <h1 align="center">React学习笔记📒</h1>
-<img src="http://www.kejiganhuo.tech/wp-content/uploads/2017/06/bg2015033101.png" align="center"></img>
-![React](http://www.kejiganhuo.tech/wp-content/uploads/2017/06/bg2015033101.png)
+<p align="center"><img src="http://www.kejiganhuo.tech/wp-content/uploads/2017/06/bg2015033101.png" /></p>
+
+
 * 知识来源：
-    * 慕课网：React.js入门与案例开发
-    * 《React全栈-Redux+Flux+webpack+Babel整合开发》  
+* 慕课网：React.js入门与案例开发
+* 《React全栈-Redux+Flux+webpack+Babel整合开发》  
 
 ## 目录
 
