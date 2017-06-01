@@ -204,7 +204,8 @@ $ echo '\n#alias for cnpm\nalias cnpm="npm --registry=https://registry.npm.taoba
 }
 ```
 * 在说热加载之前，先看一下我遇到过的问题，[React配置必踩坑](http://www.kejiganhuo.tech/?p=374)
-![error01](https://github.com/TYRMars/ReactLearn/tree/master/img/error01.png)
+--------------------------------------------------------------------------------
+![error01](http://www.kejiganhuo.tech/wp-content/uploads/2017/06/error01.png)
 * 需要注意的 ---- NPM安装的时候最好`$ sudo npm install babel-loader –save`很多人无法后面webpack无法打包，就是因为没有安装babel加载器。
 ## 05-02
 ### WebPack 热加载配置(上)
@@ -321,17 +322,25 @@ setInterval(function() {
 ```
 
 * 具体的效果如下
-![React-tools](https://github.com/TYRMars/ReactLearn/tree/master/img/React-tools.png)
+--------------------------------------------------------------------------------
+![React-tools](http://www.kejiganhuo.tech/wp-content/uploads/2017/06/React-tools.png)
 
 ## 06-01
 ### 开发工具 Atom
-* ATOM简介
 ![ATOM](https://cloud.githubusercontent.com/assets/72919/2874231/3af1db48-d3dd-11e3-98dc-6066f8bc766f.png)
 * ATOM.Github的地址[ATOM](https://github.com/atom/atom)
 * ATOM[下载](https://atom.io)
 
 ## 06-02
 ### React开发相关Atom插件配置
+* 在Packages中直接安装，这几个比较不错的插件！！！
+* atom-ternjs
+* atom-beautify
+* open-in-browser
+* emmet
+* file-icons
+* highlight-line
+* highlight-selected
 
 ## 07-01
 ### React虚拟DOM概念
