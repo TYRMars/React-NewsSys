@@ -205,7 +205,7 @@ $ echo '\n#alias for cnpm\nalias cnpm="npm --registry=https://registry.npm.taoba
 ```
 * 在说热加载之前，先看一下我遇到过的问题，[React配置必踩坑](http://www.kejiganhuo.tech/?p=374)
 --------------------------------------------------------------------------------
-![error01](http://www.kejiganhuo.tech/wp-content/uploads/2017/06/error01.png)
+![error01](http://www.kejiganhuo.tech/wp-content/uploads/2017/06/error01-e1496323125786.png)
 * 需要注意的 ---- NPM安装的时候最好`$ sudo npm install babel-loader –save`很多人无法后面webpack无法打包，就是因为没有安装babel加载器。
 ## 05-02
 ### WebPack 热加载配置(上)
@@ -323,7 +323,7 @@ setInterval(function() {
 
 * 具体的效果如下
 --------------------------------------------------------------------------------
-![React-tools](http://www.kejiganhuo.tech/wp-content/uploads/2017/06/React-tools.png)
+![React-tools](http://www.kejiganhuo.tech/wp-content/uploads/2017/06/React-tools-e1496323191745.png)
 
 ## 06-01
 ### 开发工具 Atom
@@ -344,9 +344,50 @@ setInterval(function() {
 
 ## 07-01
 ### React虚拟DOM概念
+#### 虚拟DOM的结构
+* 在传统的 Web 应用中，我们往往会把数据的变化实时地更新到用户界面中，于是每次数据的微小变动都会引起 DOM 树的重新渲染。如果当前 DOM 结构较为复杂，频繁的操作很可能会引发性能问题。React 为了解决这个问题，引入了虚拟 DOM 技术。
+<p align="center"><img src="https://www.ibm.com/developerworks/cn/web/1509_dongyue_react/index6639.png" /></p>
+* 虚拟 DOM 是一个 JavaScript 的树形结构，包含了 React 元素和模块。组件的 DOM 结构就是映射到对应的虚拟 DOM 上，React 通过渲染虚拟 DOM 到浏览器，使得用户界面得以显示。与此同时，React 在虚拟的 DOM 上实现了一个 diff 算法，当要更新组件的时候，会通过 diff 寻找到要变更的 DOM 节点，再把这个修改更新到浏览器实际的 DOM 节点上，所以在 React 中，当页面发生变化时实际上不是真的渲染整个 DOM
+* React 虚拟 DOM 中的诸多如 div 一类的标签与实际 DOM 中的 div 是相互独立的两个概念，它是一个纯粹的 JS 数据结构，它只是提供了一个与 DOM 类似的 Tag 和 API。React 会通过自身的逻辑和算法，转化为真正的 DOM 节点。也正是因为这样的结构，虚拟 DOM 的性能要比原生 DOM 快很多。
 
 ## 07-02
 ### React组件
+* 在`src/js/`下创建文件夹`components`创建一个`header.js`
+* `header.js`如下
+```JavaScript
+import React from 'react';
+import ReactDOM from 'react-dom';
+export default class CompomentHeader extends React.Component{
+  render(){
+    return(
+      <header>
+      <h1>这里是表头</h1>
+      </header>
+    );
+  }
+}
+```
+* `index.js`如下
+```JavaScript
+var React = require('react');
+var ReactDOM = require('react-dom');
+import CompomentHeader from './components/header';
+
+class Index extends React.Component {
+  render() {
+    return (
+      <div>
+      <CompomentHeader/>
+      <h1>页面主题内容</h1>
+      </div>
+    );
+  }
+}
+
+// 入口
+ReactDOM.render( < Index / > , document.getElementById('example'));
+
+```
 
 ## 07-03
 ### React多组件嵌套
