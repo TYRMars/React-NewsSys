@@ -1,9 +1,10 @@
 # React学习
+* 逐步完善更新中！！！
 
-![React](https://timgsa.baidu.com/timg?image&quality=80&size=b9999_10000&sec=1496900287&di=d3a0806a18cdad6f43ea7a2a6d1c1078&imgtype=jpg&er=1&src=http%3A%2F%2Fphotocdn.sohu.com%2F20151022%2FImg423921839.jpg)
+![React](http://www.kejiganhuo.tech/wp-content/uploads/2017/06/bg2015033101.png)
 
 ## 目录
------------------------------------------------------------------------------------------------
+
 * [01-01](https://github.com/TYRMars/ReactLearn#01-01) `基础知识目录与相关版本`
 * [02-01](https://github.com/TYRMars/ReactLearn#02-01) `React简介`
 * [02-02](https://github.com/TYRMars/ReactLearn#02-02) `其他知识梳理`
@@ -31,6 +32,7 @@
 * [08-04](https://github.com/TYRMars/ReactLearn#08-04) `可复用组件`
 * [08-05](https://github.com/TYRMars/ReactLearn#08-05) `组件Refs(操作DOM的二种方法)`
 * [08-06](https://github.com/TYRMars/ReactLearn#08-06) `独立组件间共享 Mixins`
+* [—————](https://github.com/TYRMars/ReactLearn#知识扩展) `知识扩展`
 -----------------------------------------------------------------------------------------------
 
 
@@ -58,38 +60,140 @@
 * ES5/ES6
 * NodeJS
 * HTML
-
+* CSS
+* 相关知识请看我的博客前端开发基础知识部分[科技干货-Blog](http://www.kejiganhuo.tech)
 
 ## 02-03
 ### 其他知识梳理-利用babel把ES5转化为ES6
-*
+* 安装`babel`
+* ` sudo npm install --save-dev babel-cli babel-preset-env`
+* ES6语法，因为很多浏览器还不支持ES6所以需要进行转换
+``` javascript
+  add(items){
+    items.map(item => item +1)
+  }
+```
+* 在`package.json`中，通过以下设置来实现转换
+```javascript
+{
+  ...
+  "script":{
+    build:"babel index.js --out --file bundel.js"
+  }
+  ...
+}
+
+```
+* 然后通过执行`npm run build`,编译成功后就会出现如下,打开`bundel.js`(命名可自己拟定)
+```javascript
+  "use strict"
+  add(items)(items.map(function(){
+    return item + 1;
+  }));
+```
+* 此时就完成了转换！！！
+* [ES5浏览器支持](http://kangax.github.io/compat-table/es5/)
+* [ES6浏览器支持](http://kangax.github.io/compat-table/es6/)
 
 
 ## 03-01
 ### React版本选择
-*
-
+* 查看历史版本
+* [React历史版本](http://facebook.github.io/react/blog/all.html)
+* 安装采用NPM的方法`npm install react`
+* 如果要安装在项目目录下`cd react／`下面，然后`npm install react --save`
+* 如果想在电脑全局进行安装则`npm install react  -g`
+* 会自动安装最新的版本，我用的是`React 15.5.4`
 
 ## 03-02
 ### React Starter Pack 下载使用与React初体验
+* 新版的React没有演示文件，03-02是使用的`React 15.3.2`
+* 03-02中有一些举例
+* 在examples／basic／下index.html是一个事例可以研究一下,这个地方体现了React在页面上的高性能的优点
+```javascript
+var ExampleApplication = React.createClass({
+  render: function() {
+    var elapsed = Math.round(this.props.elapsed  / 100);
+    var seconds = elapsed / 10 + (elapsed % 10 ? '' : '.0' );
+    var message =
+      'React has been successfully running for ' + seconds + ' seconds.';
 
+    return React.DOM.p(null, message);
+  }
+});
+
+// Call React.createFactory instead of directly call ExampleApplication({...}) in React.render
+var ExampleApplicationFactory = React.createFactory(ExampleApplication);
+
+var start = new Date().getTime();
+setInterval(function() {
+  ReactDOM.render(
+    ExampleApplicationFactory({elapsed: new Date().getTime() - start}),
+    document.getElementById('container')
+  );
+}, 50);
+```
 
 ## 04-01
 ### NodeJS简介
-
+* [Node.js®](https://nodejs.org/en/)是一个基于Chrome V8 JavaScript引擎构建的JavaScript运行时。 Node.js使用事件驱动的非阻塞I / O模型，使其轻便且高效。 Node.js的包生态系统，npm，是世界上最大的开源生态系统。
+* NPM命令，NPMJS有强大的库，存放着各种必备的开源文件，日常所需的基本上都能通过它找到，并安装。——[NPM.JS](https://www.npmjs.com)
 ## 04-02
 ### NodeJS安装
+* 如果想要稳定开发使用 LTS版
+* 如果想要体验NodeJS新功能可以使用 Current版
+* 建议使用 LTS版本，因为Current版本更新会删除之前的功能，使用前值得思考一下!!!!!
+* `node -v` 检测一下自己Node的版本
+* `npm -v`  检测一下自己NPM的版本
 
 ## 04-03（可选）
 ## NPM配置国内源
+* 如果你不会翻墙，或者经常NPM装不上东西，可以试一下国内的NPM镜像
+* 这是一个完整 `npmjs.org` 镜像，你可以用此代替官方版本(只读)，同步频率目前为 `10分钟` 一次以保证尽量与官方服务同步。
+* 方法一,定制的 `cnpm` (gzip 压缩支持) 命令行工具代替默认的 `npm`
+* `$ npm install -g cnpm --registry=https://registry.npm.taobao.org`
+* 方法二,直接通过添加 `npm` 参数 `alias` 一个新命令:
+```shell
+alias cnpm="npm --registry=https://registry.npm.taobao.org \
+--cache=$HOME/.npm/.cache/cnpm \
+--disturl=https://npm.taobao.org/dist \
+--userconfig=$HOME/.cnpmrc"
+
+# Or alias it in .bashrc or .zshrc
+$ echo '\n#alias for cnpm\nalias cnpm="npm --registry=https://registry.npm.taobao.org \
+--cache=$HOME/.npm/.cache/cnpm \
+--disturl=https://npm.taobao.org/dist \
+--userconfig=$HOME/.cnpmrc"' >> ~/.zshrc && source ~/.zshrc
+```
+* 使用第一种方法`taobaoNPM`使用的时候写成`$ cnpm install [name]`，就可以安装了！！！
+* 使用第二种方法`NPM`按照原来的方法`$ npm install [name]`就可以了！！！
+* 如果想了解更多点击->[cnpm](http://blog.parryqiu.com/2016/08/18/ionic_installation)
 
 ## 05-01
-### 配置WebPack
-*
-### 配置React
-*
-### 配置babel
-*
+### 配置WebPack/配置React/配置babel
+* 我使用的版本
+```javascript
+{
+  "name": "05-01",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "babel-loader": "^7.0.0",
+    "babel-preset-react": "^6.24.1",
+    "babelify": "^7.3.0",
+    "react": "^15.5.4",
+    "react-dom": "^15.5.4",
+    "webpack": "^2.5.1",
+    "webpack-dev-server": "^2.4.5"
+  }
+}
+```
 
 ## 05-02
 ### WebPack 热加载配置(上)
@@ -153,5 +257,7 @@ ReactDOM.findDOMNode(mySubmitButton).style.color = 'red';
 console.log(this.refs.submitButton);
 this.refs.submitButton.style.color = 'red';
 ```
+## 08-06
+### 独立组件间共享 Mixins
 
 ## 知识扩展
