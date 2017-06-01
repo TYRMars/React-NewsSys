@@ -1,7 +1,7 @@
 # React学习
-* 逐步完善更新中！！！
 
 ![React](http://www.kejiganhuo.tech/wp-content/uploads/2017/06/bg2015033101.png)
+* 逐步完善更新中！！！
 
 ## 目录
 
@@ -170,9 +170,15 @@ $ echo '\n#alias for cnpm\nalias cnpm="npm --registry=https://registry.npm.taoba
 * 如果想了解更多点击->[cnpm](http://blog.parryqiu.com/2016/08/18/ionic_installation)
 
 ## 05-01
-### 配置WebPack/配置React/配置babel
-* 我使用的版本
-```javascript
+### 使用NPM配置React
+* 建立项目后，`cd`到项目目录，用`npm init`做项目的初始化，会在目录下产生一个`package.json`文件
+* 然后开始安装React`$ sudo npm install --save react react-dom babelify babel-preset-react`
+* 安装完后，项目之下就有了`node_modules`这个文件夹，这个文件夹存放着以后`NPM`安装的文件
+* 下一步安装 `$ sudo npm install babel-preset-es2015 --save`
+* 全部安装完毕后就会是像我这个`package.json`一样。
+* 以下我使用的版本
+
+```json
 {
   "name": "05-01",
   "version": "1.0.0",
@@ -194,7 +200,8 @@ $ echo '\n#alias for cnpm\nalias cnpm="npm --registry=https://registry.npm.taoba
   }
 }
 ```
-
+* 在说热加载之前，先看一下我遇到过的问题，[React配置必踩坑](http://www.kejiganhuo.tech/?p=374)
+* 需要注意的 ---- NPM安装的时候最好`$ sudo npm install babel-loader –save`很多人无法后面webpack无法打包，就是因为没有安装babel加载器。
 ## 05-02
 ### WebPack 热加载配置(上)
 
