@@ -1,10 +1,12 @@
 # React学习
 
 ## 目录
-- [01-01]('https://github.com/TYRMars/ReactLearn#01-01') 基础知识目录与相关版本
-- [02-01]('https://github.com/TYRMars/ReactLearn#02-01') React简介
-- [02-02]('https://github.com/TYRMars/ReactLearn#02-02') 其他知识梳理
-
+* [01-01](https://github.com/TYRMars/ReactLearn#01-01) `基础知识目录与相关版本`
+* [02-01](https://github.com/TYRMars/ReactLearn#02-01) `React简介`
+* [02-02](https://github.com/TYRMars/ReactLearn#02-02) `其他知识梳理`
+* [02-03](https://github.com/TYRMars/ReactLearn#02-03) `其他知识梳理-利用babel把es5转化为es6`
+* [03-01](https://github.com/TYRMars/ReactLearn#03-01) `React版本选择`
+* [03-02](https://github.com/TYRMars/ReactLearn#03-02) `React Starter Pack 下载使用与React初体验`
 
 
 
@@ -23,7 +25,7 @@
 * JavaScript MVC框架
 * 2013年开源React
 * 随后发布React Native
-* React Github [React]('https://www.github.com/facebook/react')
+* React Github [React](http://www.github.com/facebook/react)
 
 ## 02-02
 ### 其他知识梳理
