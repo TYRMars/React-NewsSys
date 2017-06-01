@@ -1,7 +1,9 @@
-# React学习
-
+<h1 align="center">React学习笔记📒</h1>
+<img src="http://www.kejiganhuo.tech/wp-content/uploads/2017/06/bg2015033101.png" align="center"></img>
 ![React](http://www.kejiganhuo.tech/wp-content/uploads/2017/06/bg2015033101.png)
-* 逐步完善更新中！！！
+* 知识来源：
+    * 慕课网：React.js入门与案例开发
+    * 《React全栈-Redux+Flux+webpack+Babel整合开发》  
 
 ## 目录
 
@@ -14,7 +16,7 @@
 * [04-01](https://github.com/TYRMars/ReactLearn#04-01) `NodeJS简介`
 * [04-02](https://github.com/TYRMars/ReactLearn#04-02) `NodeJS安装`
 * [04-03](https://github.com/TYRMars/ReactLearn#04-03) `NPM配置国内源`
-* [05-01](https://github.com/TYRMars/ReactLearn#05-01) `配置WebPack/配置React/配置babel`
+* [05-01](https://github.com/TYRMars/ReactLearn#05-01) `使用NPM配置React`
 * [05-02](https://github.com/TYRMars/ReactLearn#05-02) `WebPack 热加载配置(上)`
 * [05-03](https://github.com/TYRMars/ReactLearn#05-03) `WebPack 热加载配置(中)`
 * [05-04](https://github.com/TYRMars/ReactLearn#05-04) `WebPack 热加载配置(下)`
@@ -147,7 +149,7 @@ setInterval(function() {
 * `npm -v`  检测一下自己NPM的版本
 
 ## 04-03（可选）
-## NPM配置国内源
+### NPM配置国内源
 * 如果你不会翻墙，或者经常NPM装不上东西，可以试一下国内的NPM镜像
 * 这是一个完整 `npmjs.org` 镜像，你可以用此代替官方版本(只读)，同步频率目前为 `10分钟` 一次以保证尽量与官方服务同步。
 * 方法一,定制的 `cnpm` (gzip 压缩支持) 命令行工具代替默认的 `npm`
@@ -204,9 +206,70 @@ $ echo '\n#alias for cnpm\nalias cnpm="npm --registry=https://registry.npm.taoba
 * 需要注意的 ---- NPM安装的时候最好`$ sudo npm install babel-loader –save`很多人无法后面webpack无法打包，就是因为没有安装babel加载器。
 ## 05-02
 ### WebPack 热加载配置(上)
+* 创建index.html
+```html
+<div id="example">123</div>
+<script src="bundle.js"></script>
+```
+* （这里会出现一个问题就是关于src中的bundle.js地址的问题，如果是使用`src/bundle.js`就会出现`webpack-server`无法更新的情况，我想原因是在与WebPack配置文件中我们定义了文件读取的绝对路径）
+* 在项目目录下建立src文件，用于存放未编译的js与编译好的bundle.js
+* 在src/js/目录下建立一个index.js用于存放未编译的js代码
+```js
+var React = require('react');
+var ReactDOM = require('react-dom');
+
+ReactDOM.render(
+  <h1>hello world ！！</h1>,
+  document.getElementById('example')
+);
+```
+* 基本的文档就写好了，下一节是WebPack打包📦
 
 ## 05-03
 ### WebPack 热加载配置(中)
+* 采用`WebPack2`进行打包
+* `WebPack2`安装`sudo npm install -g webpack`
+* `WebPack-dev-server`安装`sudo npm install -g webpack-dev-server`
+* 全局安装完后进行项目目录下的安装！！！！（安装的时候最好在前面加上sudo，有时权限不够会安装失败）
+```shell
+$ sudo npm install  webpack --save
+$ sudo npm install  webpack-dev-server --save
+```
+* 出现问题可以看[React配置必踩坑](http://www.kejiganhuo.tech/?p=374)！！！
+* 在目录文件下建立一个`webpack.config.js`
+* 很多参考都是采用`WebPack1`进行打包，对于`webpack2`更新后的讲解很少
+* 不过还是可以通过官方文档，加上对`webpack1`的学习，自己还是琢磨出了`webpack2`如何配置，`\(^o^)/~`，如下
+* **WebPack2配置信息**
+```js
+// webpack.config.js
+var webpack = require("webpack");
+var path = require("path");
+
+module.exports = {
+    devtool: 'source-map',
+    context: path.resolve(__dirname, "src"),
+    entry: "./js/index.js",
+    output: {
+        path: path.resolve(__dirname, "src"),
+        filename: 'bundle.js' // 打包输出的文件
+    },
+    module: {
+        rules: [{
+            test: /\.js$/, // test 去判断是否为.js或.jsx,是的话就是进行es6和jsx的编译
+            exclude: /(node_modules)/,
+            use: [{
+                  loader: 'babel-loader',
+                  //配置参数;
+                  options: { presets: ['es2015','react'] }
+                }],
+        }]
+    },
+};
+
+```
+#### 接下来运行WebPack打包
+* 在Mac终端中，项目的根目录下，`webpack`进行打包，成功打包后会在src目录下生成bundle.js，在浏览器中查看
+* 原本页面上的`123`覆盖成了`hello world ！！`
 
 ## 05-04
 ### WebPack 热加载配置(下)
