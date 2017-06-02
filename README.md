@@ -353,8 +353,35 @@ setInterval(function() {
 
 ## 07-02
 ### React组件
-* 组件是React的基石，所有的React应用程序都是基于组件的。
-* React官方第一时间就支持了ES6 class 的方法，这种写法可读性更强，一个直观的表现就是不用写getInitialState方法了，可以直接在constructor里面定义this.state的值。所以以后代码采用以下格式。
+* 组件是`React`的基石，所有的`React`应用程序都是基于组件的。
+* 之前`React`组件，使用`React.createClass`来进行声明
+```JavaScript
+var List = React.createClass({
+  getInitialState: function(){
+    return['a','b','c']
+  },
+  render: function(){
+    return(...);
+  }
+});
+```
+* `React`官方第一时间就支持了ES6 class 的方法，这种写法可读性更强，一个直观的表现就是不用写`getInitialState`方法了，可以直接在`constructor`里面定义`this.state`的值。所以以后代码采用以下格式。
+```JavaScript
+import React from 'react';
+
+class List extends React.components{
+  constructor(){
+    super();
+    this.state = ['a','b','c'];
+  }
+  render(){
+    return(...);
+  }
+}
+```
+---
+
+* 这一节里测试一下`React`的组件
 * 在`src/js/`下创建文件夹`components`创建一个`header.js`
 * `header.js`如下
 ```JavaScript
@@ -425,6 +452,9 @@ export default class CompomentFooter extends React.Component{
 
 ## 07-04
 ### JSX内置表达式
+#### JSX
+* 在render方法中有一种直接把HTML嵌套在JS中的写法，它被称为JSX。这种写法类似XML，它可以定义HTML一样简洁的树状结构。这种语法结合了JavaScript和HTML的优点（我理解模版化我们编写的程序，这就是React的初衷）既可以像平常一样使用HTML，也可以在里面嵌套JavaScript语法，这种👬友好的格式，让开发者更易于阅读和开发。而且，对于组件来说，直接使用类似HTML的格式，也是非常合理的。但是，需要注意的是。JSX和HTML完全不是一回事，JSX只是作为编译器，把类似HTML的结构编译成JavaScript。
+* JSX的注释是需要特别注意的，采用`{/*注释*/}`
 
 ## 07-05
 ### 生命周期
@@ -449,7 +479,7 @@ export default class CompomentFooter extends React.Component{
 var mySubmitButton = document.getElementById('submitButton');
 console.log(mySubmitButton);
 ReactDOM.findDOMNode(mySubmitButton).style.color = 'red';
-//不推荐此方法，有安全隐患
+//不推荐此方法，有安全隐患，XSS攻击
 ```
 
 * 第二种方法
