@@ -418,6 +418,32 @@ class Index extends React.Component {
 ReactDOM.render( < Index / > , document.getElementById('example'));
 
 ```
+#### HTML标签与React组件
+* React可以直接渲染HTML类型的标签，也可以渲染React的组件
+* HTML类型的标签第一个字母用小写来写表示。
+```JavaScript
+import React from 'react';
+//当一个标签里面为空的时候，可以直接使用自闭和标签
+//注意class是一个JavaScript保留字，所以如果class应该替换成className
+let divElement = <div className="foo"/>;
+//等同于
+let divElement = React.createElement('div',{className:'foo'});
+```
+* React组件标签第一个字母大写。
+```JavaScript
+import React from 'react';
+class Headline extends React.component{
+  ...
+  render(){
+    //直接return JSX语法
+    return <h1>Hello React</h1>
+  }
+}
+let Headline = <Headline />;
+let headline = React.createElement(Headline);
+```
+* `JSX`语法使用第一个字母大小写来区分是一个普通的`HTML`标签还是一个`React`组件
+* 注意：因为`JSX`本身是`JavaScript`语法，所以一些`JavaScript`中的保留字要用其他的方式书写，比如第一个例子中`class`要写成`className`
 
 ## 07-03
 ### React多组件嵌套
@@ -455,6 +481,15 @@ export default class CompomentFooter extends React.Component{
 #### JSX
 * 在render方法中有一种直接把HTML嵌套在JS中的写法，它被称为JSX。这种写法类似XML，它可以定义HTML一样简洁的树状结构。这种语法结合了JavaScript和HTML的优点（我理解模版化我们编写的程序，这就是React的初衷）既可以像平常一样使用HTML，也可以在里面嵌套JavaScript语法，这种👬友好的格式，让开发者更易于阅读和开发。而且，对于组件来说，直接使用类似HTML的格式，也是非常合理的。但是，需要注意的是。JSX和HTML完全不是一回事，JSX只是作为编译器，把类似HTML的结构编译成JavaScript。
 * JSX的注释是需要特别注意的，采用`{/*注释*/}`
+#### JSX不是必须的
+* JSX编译器把类似HTML的写法转换成原生的JavaScript方法，并且会将传入的属性转化为对应的对象。它就类似于一种语法糖，把标签类型的写法转换成`React`提供的一个用来创建 ReactElement 的方法
+```JavaScript
+const MyCompoment;
+//input JSX,在JS中直接写成类似HTML的内容，前所未有的感觉，其实它返回的是一个ReactElement
+let app = <h1 title="my title"> this is my title </h1>
+//JSX转换后的结果
+let app = React.createElement('h1',{title: 'my title'},'this is my title');
+```
 
 ## 07-05
 ### 生命周期
