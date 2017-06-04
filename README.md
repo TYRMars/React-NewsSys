@@ -493,7 +493,7 @@ let app = React.createElement('h1',{title: 'my title'},'this is my title');
 
 ## 07-05
 ### 生命周期
-* 每个生物😯都有它的生命周期，从出生🐣、少年、成年再到死亡。同理组件也有它特定的生命周期，React用不同的方法来描述它的整个生命周期。现在，要稍微修改一下组件的代码，当组件加载完毕1秒以后，使like的值自动加1
+* 每个生物😯都有它的生命周期，从出生🐣、少年、成年再到死亡。同理组件也有它特定的生命周期，React用不同的方法来描述它的整个生命周期。现在，要稍微修改一下组件的代码，当组件加载完毕1秒以后，使`like`的值自动加1
 ```JavaScript
 ...
 componentDidMount(){
@@ -503,8 +503,21 @@ componentDidMount(){
 }
 ...
 ```
-* componentDidMount这个方法就是在render完成并且组件装载完成之后调用的方法，所以界面中先显示为0，1秒以后此方法被调用，界面被重新渲染，like值变成了1
-<p align="center"><img src="" /></p>
+* `componentDidMount`这个方法就是在`render`完成并且组件装载完成之后调用的方法，所以界面中先显示为0，1秒以后此方法被调用，界面被重新渲染，`like`值变成了1
+#### 组件首次加载
+* `getDefaultProps`只会在装载之前调用一次，在组件中赋值的数据会被设置到`this.props`中。
+* `getInitialState`只会在装载之前调用一次，这个函数的返回值会被设置到`this.state`中，需要注意的是，在ES6的写法，只需写在`constructor`中即可，如下
+```JavaScript
+class MyCompoment extends React.Component{
+  constructor(props) {
+    super(props);
+    //在这里声明state
+    this.state = {count: 0};
+  }
+}
+```
+* `componentWillMount`在render之前被调用，可以
+<p align="center"><img src="http://www.kejiganhuo.tech/wp-content/uploads/2017/06/React生命周期.png" /></p>
 
 * 探索`BodyIndex`的`componentWillMount`和`componentDidMount`生命周期
 ```JavaScript
@@ -555,7 +568,7 @@ class Index extends React.Component {
 }
 
 // 入口
-ReactDOM.render( < Index / > , document.getElementById('example'));
+ReactDOM.render( <Index /> , document.getElementById('example'));
 ```
 
 * 在浏览器的开发者工具中就可以看到`console`,如下图
