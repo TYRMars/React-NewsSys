@@ -493,6 +493,72 @@ let app = React.createElement('h1',{title: 'my title'},'this is my title');
 
 ## 07-05
 ### 生命周期
+* 每个生物😯都有它的生命周期，从出生🐣、少年、成年再到死亡。同理组件也有它特定的生命周期，React用不同的方法来描述它的整个生命周期。现在，要稍微修改一下组件的代码，当组件加载完毕1秒以后，使like的值自动加1
+```JavaScript
+...
+componentDidMount(){
+  setTimeout(()=>{
+    this.likeCallback();
+  },1000);
+}
+...
+```
+* componentDidMount这个方法就是在render完成并且组件装载完成之后调用的方法，所以界面中先显示为0，1秒以后此方法被调用，界面被重新渲染，like值变成了1
+<p align="center"><img src="" /></p>
+
+* 探索`BodyIndex`的`componentWillMount`和`componentDidMount`生命周期
+```JavaScript
+import React from 'react';
+export default class BodyIndex extends React.Component{
+  componentWillMount(){
+    //定义你的逻辑即可
+    console.log("BodyIndex - componentWillMount");
+  }
+
+  componentDidMount(){
+    console.log("BodyIndex - componentDidMount");
+  }
+  render(){
+    ...
+    return(
+      ...
+    )
+  }
+}
+
+```
+* 在浏览器的开发者工具中就可以看到`console`
+* 再来查看Index的的`componentWillMount`和`componentDidMount`生命周期，`BodyIndex`包含在`Index`中
+```JavaScript
+var React = require('react');
+var ReactDOM = require('react-dom');
+import CompomentHeader from './components/header';
+import CompomentFooter from './components/footer';
+import BodyIndex from './components/bodyIndex';
+class Index extends React.Component {
+  componentWillMount(){
+    //定义你的逻辑即可
+    console.log("Index - componentWillMount");
+  }
+  componentDidMount(){
+    console.log("Index - componentDidMount");
+  }
+  render() {
+    return (
+      <div>
+      <CompomentHeader/>
+      <BodyIndex/>
+      <CompomentFooter/>
+      </div>
+    )
+  }
+}
+
+// 入口
+ReactDOM.render( < Index / > , document.getElementById('example'));
+```
+
+* 在浏览器的开发者工具中就可以看到`console`,如下图
 
 ## 08-01
 ### State属性
