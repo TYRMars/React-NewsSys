@@ -36,7 +36,7 @@
 * [08-05](https://github.com/TYRMars/ReactLearn#08-05) `组件Refs(操作DOM的二种方法)`
 * [08-06](https://github.com/TYRMars/ReactLearn#08-06) `独立组件间共享 Mixins`
 * [—————](https://github.com/TYRMars/ReactLearn#知识扩展) `知识扩展`
-* [JSX的来历](https://github.com/TYRMars/ReactLearn#JSX的来历) `JSX的来历`
+* [00-01](https://github.com/TYRMars/ReactLearn#00-01) `JSX的来历`
 -----------------------------------------------------------------------------------------------
 
 
@@ -615,7 +615,8 @@ this.refs.submitButton.style.color = 'red';
 ### 独立组件间共享 Mixins
 
 # 知识扩展
-## JSX的来历
+## 00-01
+### JSX的来历
 * 下面是一段官方文档中的引用，它可以解释JSX这种写法诞生的初衷
 `We strongly believe that components are the right way to separate concerns rather than "templates" and "display logic" . We think that markup and the code that generate it are intimately tied together . Additionally , display logic is often very complex and using template languages to express it becomes cumbersome`
 * 多年以来，在传统的开发中，把模版和功能分离看作是最佳事件的完美例子，翻阅形形色色的框架文档，总有一个模版文件夹里放置了对应的模版文件，然后通过模版引擎处理这些字符，来生成把数据和模版结合起来的字符。而React认为世界是基于组件的，组件自然而然和模版相连，把逻辑和模版分开放置是一种笨重的思路，所以React创造了一种名为JSX的语法格式来架起它们之间的桥梁。
