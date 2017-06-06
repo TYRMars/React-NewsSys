@@ -581,9 +581,11 @@ ReactDOM.render( <Index /> , document.getElementById('example'));
 
 ## 08-01
 ### State属性
+#### state状态
+* `state` 是组件内部的属性。组件本事是一个`状态机`，它可以在`constructor`中通过`this.state`直接定义它的值，然后根据这些值来渲染不同的UI。当`state`的值发生改变时，可以通过`this.setState`方法让组件再次调用`render`方法，来渲染新的UI。当`state`的值发生改变时，可以通过`this.setState`方法再次调用`render`方法，来渲染新的UI。
 #### state设计原则
-* 什么组件应该有State，而且应该遵循最小化state的准则？那就是尽量让大多数的组件都是无状态的。为了实现这样的结构，因该尽量把状态分离在一些特定的组件中，来降低组件的复杂程度。最常见的做法就是创建尽力那个多的无状态组件，这些组件唯一要关心的事情就是渲染数据。而在这些组件的外层，应该有一个包含state的父级的组件。这个组件用于处理各种事件、交流逻辑、修改state、对应的子组件要关心的只是传入的属性而已
-* state 应该包含什么数据？ state中应该包含组件的事件回调函数可能引发UI更新的这类数据。在实际的项目中，这些应该是轻量化的JSON数据，应该尽量把数据的表现设计到最小，而更多的数据可以在render方法通过各种计算来得到。这里举一个例子，比如说现在有一个商品列表，还有一个用户已经选购的商品列表，最直观的设计方法如下：
+* 什么组件应该有`State`，而且应该遵循最小化`state`的准则？那就是尽量让大多数的组件都是无状态的。为了实现这样的结构，因该尽量把状态分离在一些特定的组件中，来降低组件的复杂程度。最常见的做法就是创建尽力那个多的无状态组件，这些组件唯一要关心的事情就是渲染数据。而在这些组件的外层，应该有一个包含`state`的父级的组件。这个组件用于处理各种事件、交流逻辑、修改`state`、对应的子组件要关心的只是传入的属性而已
+* `state` 应该包含什么数据？ `state`中应该包含组件的事件回调函数可能引发UI更新的这类数据。在实际的项目中，这些应该是轻量化的JSON数据，应该尽量把数据的表现设计到最小，而更多的数据可以在render方法通过各种计算来得到。这里举一个例子，比如说现在有一个商品列表，还有一个用户已经选购的商品列表，最直观的设计方法如下：
 ```JavaScript
 {
   goods:[
@@ -615,17 +617,193 @@ selectedGoods:[1,2,3]
   * 可以由state计算出的数据。就像selectedGoods一样，可以由goods列表计算得出。
   * 组件。组件不需要保存到state中，只需要在`render`方法中渲染。
   * `props`中的数据。`props`可以看作是组件的数据来源，它不需要保存在`state`中。
-#### state状态
+---
 
+#### state 使用事例
+```JavaScript
+import React from 'react';
+export default class BodyIndex extends React.Component {
+  constructor() {
+    super(); //调用基类的所有的初始化方法
+    this.state = {
+      username: "Parry",
+      age:20
+    };//初始化赋值
+  }
+  render() {
+    setTimeout(() => {
+      //更改state的时候
+      this.setState({username: "IMOOC",age:30})
+    }, 4000);
+
+    return (
+      <div>
+        <h2>页面主题内容</h2>
+        <p>{this.state.username} {this.state.age}</p>
+      </div>
+    )
+  }
+}
+```
+* 可以用Chorme React组件中查看到`state`只会在相应的模块中有值，不会影响到其他模块。它属于模块自身属性。
 ## 08-02
 ### Props属性
 
+#### Props事例
+* index.js代码
+```JavaScript
+...
+render() {
+  return (
+    <div>
+    <CompomentHeader/>
+    <BodyIndex userid={123456} username={"nick"}/>
+    <CompomentFooter/>
+    </div>
+  )
+}
+...
+```
+* bodyIndex.js代码
+```JavaScript
+import React from 'react';
+export default class BodyIndex extends React.Component {
+  constructor() {
+    super(); //调用基类的所有的初始化方法
+    this.state = {
+      username: "Parry",
+      age:20
+    };//初始化赋值
+  }
+  render() {
+
+    setTimeout(() => {
+      //更改state的时候
+      this.setState({username: "IMOOC",age:30})
+    }, 4000);
+
+    return (
+      <div>
+        <h2>页面主题内容</h2>
+        <p>{this.state.username} {this.state.age} {this.props.userid} {this.props.username}</p>
+      </div>
+    )
+  }
+}
+```
+* 可以用`Chorme React`组件中查看到，`Props`相当于跨组件传值，而且优点在于不会影响其他模块的值。`Props`对于模块本身来说属于外来属性。
 ## 08-03
 ### 事件与数据的双向绑定
+* bodyIndex.js代码
+```JavaScript
+import React from 'react';
+import BodyChild from './bodychild'
+export default class BodyIndex extends React.Component {
+  constructor() {
+    super(); //调用基类的所有的初始化方法
+    this.state = {
+      username: "Parry",
+      age:20
+    };//初始化赋值
+  }
 
+  handleChildValueChange(event){
+    this.setState({age:event.target.value});//取出子页面的值
+  }
+
+  changeUserInfo(){
+    this.setState({age:50});
+  };
+
+  render() {
+    return (
+      <div>
+        <h2>页面主题内容</h2>
+        <p>{this.state.username} {this.state.age} {this.props.userid} {this.props.username}</p>
+        <p>age: {this.state.age}</p>
+        <input type="button" value="提交" onClick={this.changeUserInfo.bind(this)}/>
+        <BodyChild handleChildValueChange={this.handleChildValueChange.bind(this)}/>
+      </div>
+    )
+  }
+}
+
+```
+* bodychild.js代码
+```JavaScript
+import React from 'react';
+export default class BodyChild extends React.Component{
+
+  render() {
+    return(
+      <div>
+        <p>子页面输入：<input type="text" onChange={this.props.handleChildValueChange}/></p>
+      </div>
+    )
+  }
+}
+
+```
+* 通过在子页面`BodyChild`设置`props`，子页面`value`改变调用`handleChildValueChange`，传值到父页面`bodyIndex`。也就是说在子页面中通过调用父页面传递过来的事件props进行组件间的参数传递。
+* 思考（onChange与onBlur）的对比。
+* `ES6`的语法注意
+  * 函数绑定方法this ：`this.forceUpdateHander = this.forceUpdateHander.bind(this)`
+  * 或者调用时绑定：`onClick={this.changeUserInfo.bind(this,50)}`
 ## 08-04
 ### 可复用组件
+* 类定义完后，追加属性`propTypes`传入参数`userid:React.PropTypes.number`，规定userid是一个数字型，如果传入字符型和其他的非数字型，都会报错。
+* 给页面传入默认值 `const defaultProps ={username:'这是一个默认的用户名'//默认属性设置};`，把定义的`prop`传入 `BodyIndex.defaultProps = defaultProps;`。
+```JavaScript
+import React from 'react';
+import BodyChild from './bodychild'
 
+const defaultProps = {
+  username:'这是一个默认的用户名'//默认属性设置
+};
+
+export default class BodyIndex extends React.Component {
+  constructor() {
+    super(); //调用基类的所有的初始化方法
+    this.state = {
+      username: "Parry",
+      age:20
+    };//初始化赋值
+  }
+
+  handleChildValueChange(event){
+    this.setState({age:event.target.value})
+  }
+
+  changeUserInfo(){
+    this.setState({age:50});
+  };
+
+  render() {
+
+    // setTimeout(() => {
+    //   //更改state的时候
+    //   this.setState({username: "IMOOC",age:30})
+    // }, 4000);
+
+    return (
+      <div>
+        <h2>页面主题内容</h2>
+        <p>接收到的父页面属性：userid: {this.props.userid} username: {this.props.username}</p>
+        <p>age: {this.state.age}</p>
+        <input type="button" value="提交" onClick={this.changeUserInfo.bind(this,99)}/>
+        <BodyChild {...this.props} id={4} handleChildValueChange={this.handleChildValueChange.bind(this)}/>{/*传参数到孙子节点*/}
+      </div>
+    )
+  }
+}
+
+BodyIndex.propTypes = {
+  userid: React.PropTypes.number
+};
+
+BodyIndex.defaultProps = defaultProps;
+
+```
 ## 08-05
 ### 组件Refs(操作DOM的二种方法)
 * 第一种方式
