@@ -874,7 +874,33 @@ ReactMixin(BodyIndex.propTypes,MixinLog);
 * 点击页面上的提交按钮🔘在`console.log`中会出现`MixinLog componentDidMount`和`abcdefg`
 ## 09-01
 ### React 內联式样
+* 通过header.js演示JSX样式控制,直接內联到标签中的style
+```JavaScript
+import React from 'react';
+export default class CompomentHeader extends React.Component{
 
+  render(){
+    const styleComponentHeader = {
+      header: {
+        backgroundColor: "#333333",
+        color: "#ffffff",
+        "padding-top": "15px",
+        paddingBottom: "15px"
+      }
+      //还可以定义其他的样式
+    }
+    return(
+      <header style={styleComponentHeader.header}>
+        <h1>这里是表头</h1>
+      </header>
+    )
+  }
+}
+```
+* 在`React`上不是很适合此方法，但在移动开发`ReactNative`中会常用。
+#### 采用原始引用方式
+* `header`添加为`<header style={styleComponentHeader.header} className="smallFintSize">`，并在`index.html`引用相关`css`
+* 不好在于污染全局
 # 知识扩展
 ## 00-01
 ### JSX的来历
