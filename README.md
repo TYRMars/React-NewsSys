@@ -35,6 +35,7 @@
 * [08-04](https://github.com/TYRMars/ReactLearn#08-04) `可复用组件`
 * [08-05](https://github.com/TYRMars/ReactLearn#08-05) `组件Refs(操作DOM的二种方法)`
 * [08-06](https://github.com/TYRMars/ReactLearn#08-06) `独立组件间共享 Mixins`
+* [09-01](https://github.com/TYRMars/ReactLearn#08-06) `React 內联式样`
 * [—————](https://github.com/TYRMars/ReactLearn#知识扩展) `知识扩展`
 * [00-01](https://github.com/TYRMars/ReactLearn#00-01) `JSX的来历`
 -----------------------------------------------------------------------------------------------
@@ -813,7 +814,7 @@ BodyIndex.defaultProps = defaultProps;
 
 ```
 ## 08-05
-### 组件Refs(操作DOM的二种方法)
+### 组件Refs(操作DOM的2⃣️两种方法)
 * 第一种方式
 
 ```javascript
@@ -831,6 +832,48 @@ this.refs.submitButton.style.color = 'red';
 ```
 ## 08-06
 ### 独立组件间共享 Mixins
+* ES6不支持Mixin，所以需要相插件来进行支持，`npm install --save react-mixin@2`
+* 测试一下Mixin是如何运行的
+* 在`src/js/components`下创建`mixins.js`
+```JavaScript
+const MixinLog = {
+  componentDidMount(){
+    console.log("MixinLog componentDidMount");//查看Mixin生命周期
+  },
+  log(){
+    console.log("abcdefg");
+  }
+};
+
+export default MixinLog //向外输出
+
+```
+* 在bodyIndex.js中
+```JavaScript
+import React from 'react';
+import ReactDOM from 'react-dom';
+import BodyChild from './bodychild';
+import ReactMixin from 'react-mixin';
+import MixinLog from './mixins';
+
+  changeUserInfo() {
+    ...
+    MixinLog.log();
+  };
+
+  render() {
+    ...
+    <input id="submitButton" ref="submitButton" type="button" value="提交" onClick={this.changeUserInfo.bind(this, 99)}/>
+    ...
+  }
+
+BodyIndex.defaultProps = defaultProps;
+
+ReactMixin(BodyIndex.propTypes,MixinLog);
+```
+* 点击页面上的提交按钮🔘在`console.log`中会出现`MixinLog componentDidMount`和`abcdefg`
+## 09-01
+### React 內联式样
 
 # 知识扩展
 ## 00-01
