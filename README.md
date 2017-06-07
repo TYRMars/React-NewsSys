@@ -519,7 +519,15 @@ class MyCompoment extends React.Component{
 ```
 * `componentWillMount`在render之前被调用，可以在渲染之前做一些准备工作。
 * `render`这个方法是组件的一个必要方法。当这个方法被调用的时候，应返回一个`ReactElement`对象。`render`是一个纯函数，它的意义就是在给定相同的条件时，它的🔙返回结果应该每次都完全一致的。不应该有任何修改组件`state`的代码或者修改组件state 的代码或者是和浏览器交互的情况。
-* `componentDidMount`只会在装载完成之后调用一次，在render之后调用，从这里开始获取组件的DOM结构。如果想让组件加载完毕后做一些额外的操作（比如AJAX请求等），可以在这个方法中添加相应代码。
+* `componentDidMount`只会在装载完成之后调用一次，在`render`之后调用，从这里开始获取组件的`DOM结构`。如果想让组件加载完毕后做一些额外的操作（比如`AJAX`请求等），可以在这个方法中添加相应代码。
+#### 2.组件props更新
+* 当组件接收到新的`props`的时候，会依次触发下列方法。
+  * `componentWillReceiveProps(object nextProps)`，在组件接收到新的props的时候被触发，参数nextProps就是传入的新的props，你可以用它和this.props比较，来决定是否用`this.setState`实现`UI`重新渲染。
+  * shouldCompentUpdate，在重新render之前被调用，可以返回一个布尔值来决定一个组件是否更新，如果返回`false`，那么前面的流程都不会被触发。这个方法默认的返回值都是`true`。
+  * `render`，和组件首次加载的方法相同
+  * `componentDidUpdate`，重新渲染完成以后立即调用，和`componentDidMount`类似
+#### 3.组件卸载
+* `componentWillUnmount`，在组件被卸载和销毁之前调用的方法，可以在这里做一些清理的工作。
 
 ---
 
