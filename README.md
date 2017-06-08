@@ -35,7 +35,8 @@
 * [08-04](https://github.com/TYRMars/ReactLearn#08-04) `可复用组件`
 * [08-05](https://github.com/TYRMars/ReactLearn#08-05) `组件Refs(操作DOM的二种方法)`
 * [08-06](https://github.com/TYRMars/ReactLearn#08-06) `独立组件间共享 Mixins`
-* [09-01](https://github.com/TYRMars/ReactLearn#08-06) `React 內联式样`
+* [09-01](https://github.com/TYRMars/ReactLearn#09-01) `React 內联式样`
+* [09-02](https://github.com/TYRMars/ReactLearn#09-02) `React 內联式样中的表达式`
 * [—————](https://github.com/TYRMars/ReactLearn#知识扩展) `知识扩展`
 * [00-01](https://github.com/TYRMars/ReactLearn#00-01) `JSX的来历`
 -----------------------------------------------------------------------------------------------
@@ -208,7 +209,7 @@ $ echo '\n#alias for cnpm\nalias cnpm="npm --registry=https://registry.npm.taoba
 * 在说热加载之前，先看一下我遇到过的问题，[React配置必踩坑](http://www.kejiganhuo.tech/?p=374)
 --------------------------------------------------------------------------------
 ![error01](http://www.kejiganhuo.tech/wp-content/uploads/2017/06/error01-e1496323125786.png)
-* 需要注意的 ---- NPM安装的时候最好`$ sudo npm install babel-loader –save`很多人无法后面webpack无法打包，就是因为没有安装babel加载器。
+* 需要注意的 ---- NPM安装的时候最好`$ sudo npm install babel-loader -–save`很多人无法后面webpack无法打包，就是因为没有安装babel加载器。
 ## 05-02
 ### WebPack 热加载配置(上)
 * 创建index.html
@@ -219,7 +220,7 @@ $ echo '\n#alias for cnpm\nalias cnpm="npm --registry=https://registry.npm.taoba
 * （这里会出现一个问题就是关于src中的bundle.js地址的问题，如果是使用`src/bundle.js`就会出现`webpack-server`无法更新的情况，我想原因是在与WebPack配置文件中我们定义了文件读取的绝对路径）
 * 在项目目录下建立src文件，用于存放未编译的js与编译好的bundle.js
 * 在src/js/目录下建立一个index.js用于存放未编译的js代码
-```js
+```JavaScript
 var React = require('react');
 var ReactDOM = require('react-dom');
 
@@ -872,6 +873,7 @@ BodyIndex.defaultProps = defaultProps;
 ReactMixin(BodyIndex.propTypes,MixinLog);
 ```
 * 点击页面上的提交按钮🔘在`console.log`中会出现`MixinLog componentDidMount`和`abcdefg`
+
 ## 09-01
 ### React 內联式样
 * 通过header.js演示JSX样式控制,直接內联到标签中的style
@@ -897,10 +899,50 @@ export default class CompomentHeader extends React.Component{
   }
 }
 ```
-* 在`React`上不是很适合此方法，但在移动开发`ReactNative`中会常用。
+* 在`React`上不是很适合此方法，`hover`等一些动画或者伪类，但在移动开发`ReactNative`中会常用。
 #### 采用原始引用方式
 * `header`添加为`<header style={styleComponentHeader.header} className="smallFintSize">`，并在`index.html`引用相关`css`
 * 不好在于污染全局
+
+## 09-02
+#### 內联式样中的表达式
+```JavaScript
+import React from 'react';
+export default class CompomentHeader extends React.Component{
+
+  constructor(){
+    super();
+    this.state ={
+      miniHeader:false //默认加载的时候还是高（不是mini）的头部
+    };
+  };
+
+  switchHeader(){
+    this.setState({
+      miniHeader: !this.state.miniHeader //对state进行取反
+    });
+  };
+
+  render(){
+    const styleComponentHeader = {
+      header: {
+        backgroundColor: "#333333",
+        color: "#ffffff",
+        "padding-top": (this.state.miniHeader) ? "3px" : "15px",
+        paddingBottom: (this.state.miniHeader) ? "3px" : "15px"
+      },
+      //还可以定义其他的样式
+    };
+    return(
+      <header style={styleComponentHeader.header} className="smallFintSize" onClick={this.switchHeader.bind(this)}>
+        <h1>这里是表头</h1>
+      </header>
+    )
+  }
+}
+
+```
+
 # 知识扩展
 ## 00-01
 ### JSX的来历
