@@ -37,6 +37,8 @@
 * [08-06](https://github.com/TYRMars/ReactLearn#08-06) `独立组件间共享 Mixins`
 * [09-01](https://github.com/TYRMars/ReactLearn#09-01) `React 內联式样`
 * [09-02](https://github.com/TYRMars/ReactLearn#09-02) `React 內联式样中的表达式`
+* [09-03](https://github.com/TYRMars/ReactLearn#09-03) `React CSS模块化`
+* [09-04](https://github.com/TYRMars/ReactLearn#09-04) `React JSX样式与CSS的转换`
 * [—————](https://github.com/TYRMars/ReactLearn#知识扩展) `知识扩展`
 * [00-01](https://github.com/TYRMars/ReactLearn#00-01) `JSX的来历`
 -----------------------------------------------------------------------------------------------
@@ -1022,8 +1024,13 @@ export default class CompomentFooter extends React.Component{
 }
 ```
 * 因为我们在打包时设置了`localIdentName:'[path][name]__[local]--[hash:base64:5]'`，这地方就是引用css的路径限制。
-* 默认情况下，CSS 将所有的类名暴露到全局的选择器作用域中。样式可以在局部作用域中，避免全局作用域的样。详细🔎请查看官方文档[官方文档式]('https://doc.webpack-china.org/loaders/css-loader/#scope')
+* 默认情况下，CSS 将所有的类名暴露到全局的选择器作用域中。样式可以在局部作用域中，避免全局作用域的样。详细🔎请查看官方文档[官方文档式](https://doc.webpack-china.org/loaders/css-loader/#scope)
 * 所以在浏览器中`console`出了`Object {miniFooter: "css-footer__miniFooter--2W_7G"}`
+
+## 09-04
+#### JSX样式与CSS的转换
+* CSSToReact工具🔧[Github](https://github.com/staxmanade/CssToReact)
+* [Web工具地址](http://staxmanade.com/CssToReact/)
 
 # 知识扩展
 ## 00-01
