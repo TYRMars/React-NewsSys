@@ -5,7 +5,7 @@ var path = require("path");
 module.exports = {
   devtool: 'source-map',
   context: path.resolve(__dirname, "src"),
-  entry: "./js/index.js",
+  entry: "./js/root.js",
   output: {
     path: path.resolve(__dirname, "dist"),
     filename: 'bundle.js' // 打包输出的文件
