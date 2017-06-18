@@ -2,20 +2,16 @@
 	MIT License http://www.opensource.org/licenses/mit-license.php
 	Author Tobias Koppers @sokra
 */
-"use strict";
-const ModuleDependency = require("./ModuleDependency");
+var ModuleDependency = require("./ModuleDependency");
 
-class ContextElementDependency extends ModuleDependency {
-	constructor(request, userRequest) {
-		super(request);
-		if(userRequest) {
-			this.userRequest = userRequest;
-		}
-	}
-
-	get type() {
-		return "context element";
+function ContextElementDependency(request, userRequest) {
+	ModuleDependency.call(this, request);
+	if(userRequest) {
+		this.userRequest = userRequest;
 	}
 }
-
 module.exports = ContextElementDependency;
+
+ContextElementDependency.prototype = Object.create(ModuleDependency.prototype);
+ContextElementDependency.prototype.constructor = ContextElementDependency;
+ContextElementDependency.prototype.type = "context element";

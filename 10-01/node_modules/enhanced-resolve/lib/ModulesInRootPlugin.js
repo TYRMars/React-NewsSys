@@ -2,21 +2,27 @@
 	MIT License http://www.opensource.org/licenses/mit-license.php
 	Author Tobias Koppers @sokra
 */
-function ModulesInRootPlugin(source, path, target) {
-	this.source = source;
+var createInnerCallback = require("./createInnerCallback");
+
+function ModulesInRootPlugin(moduleType, path) {
+	this.moduleType = moduleType;
 	this.path = path;
-	this.target = target;
 }
 module.exports = ModulesInRootPlugin;
 
 ModulesInRootPlugin.prototype.apply = function(resolver) {
-	var target = this.target;
+	var moduleType = this.moduleType;
 	var path = this.path;
-	resolver.plugin(this.source, function(request, callback) {
-		var obj = Object.assign({}, request, {
+	resolver.plugin("module", function(request, callback) {
+		this.applyPluginsParallelBailResult("module-" + moduleType, {
 			path: path,
-			request: "./" + request.request
-		});
-		resolver.doResolve(target, obj, "looking for modules in " + path, callback, true);
+			request: request.request,
+			query: request.query,
+			directory: request.directory
+		}, createInnerCallback(function innerCallback(err, result) {
+			if(err) return callback(err);
+			if(!result) return callback();
+			return callback(null, result);
+		}, callback, "looking for modules in " + path));
 	});
 };

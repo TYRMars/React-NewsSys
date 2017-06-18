@@ -2,55 +2,33 @@
 	MIT License http://www.opensource.org/licenses/mit-license.php
 	Author Tobias Koppers @sokra
 */
-"use strict";
-const Dependency = require("../Dependency");
-const webpackMissingModuleModule = require("./WebpackMissingModule").module;
+var Dependency = require("../Dependency");
 
-class AMDRequireArrayDependency extends Dependency {
-	constructor(depsArray, range) {
-		super();
-		this.depsArray = depsArray;
-		this.range = range;
-	}
-
-	get type() {
-		return "amd require array";
-	}
+function AMDRequireArrayDependency(depsArray, range) {
+	Dependency.call(this);
+	this.depsArray = depsArray;
+	this.range = range;
 }
+module.exports = AMDRequireArrayDependency;
 
-AMDRequireArrayDependency.Template = class AMDRequireArrayDependencyTemplate {
-	apply(dep, source, outputOptions, requestShortener) {
-		const content = this.getContent(dep, outputOptions, requestShortener);
-		source.replace(dep.range[0], dep.range[1] - 1, content);
-	}
+AMDRequireArrayDependency.prototype = Object.create(Dependency.prototype);
+AMDRequireArrayDependency.prototype.constructor = AMDRequireArrayDependency;
+AMDRequireArrayDependency.prototype.type = "amd require array";
 
-	getContent(dep, outputOptions, requestShortener) {
-		const requires = dep.depsArray.map((dependency) => {
-			const optionalComment = this.optionalComment(outputOptions.pathinfo, requestShortener.shorten(dependency.request));
-			return this.contentForDependency(dependency, optionalComment);
-		});
-		return `[${requires.join(", ")}]`;
-	}
+AMDRequireArrayDependency.Template = function AMDRequireArrayDependencyTemplate() {};
 
-	optionalComment(pathInfo, shortenedRequest) {
-		if(!pathInfo) {
-			return "";
-		}
-		return `/*! ${shortenedRequest} */ `;
-	}
-
-	contentForDependency(dep, comment) {
+AMDRequireArrayDependency.Template.prototype.apply = function(dep, source, outputOptions, requestShortener) {
+	var content = "[" + dep.depsArray.map(function(dep) {
 		if(typeof dep === "string") {
 			return dep;
+		} else {
+			var comment = "";
+			if(outputOptions.pathinfo) comment = "/*! " + requestShortener.shorten(dep.request) + " */ ";
+			if(dep.module)
+				return "__webpack_require__(" + comment + JSON.stringify(dep.module.id) + ")";
+			else
+				return require("./WebpackMissingModule").module(dep.request);
 		}
-
-		if(dep.module) {
-			const stringifiedId = JSON.stringify(dep.module.id);
-			return `__webpack_require__(${comment}${stringifiedId})`;
-		}
-
-		return webpackMissingModuleModule(dep.request);
-	}
+	}).join(", ") + "]";
+	source.replace(dep.range[0], dep.range[1] - 1, content);
 };
-
-module.exports = AMDRequireArrayDependency;

@@ -2,14 +2,11 @@
 	MIT License http://www.opensource.org/licenses/mit-license.php
 	Author Tobias Koppers @sokra
 */
-"use strict";
+var ExternalsPlugin = require("../ExternalsPlugin");
 
-const ExternalsPlugin = require("../ExternalsPlugin");
-
-class NodeTargetPlugin {
-	apply(compiler) {
-		new ExternalsPlugin("commonjs", Object.keys(process.binding("natives"))).apply(compiler);
-	}
-}
+function NodeTargetPlugin() {}
 
 module.exports = NodeTargetPlugin;
+NodeTargetPlugin.prototype.apply = function(compiler) {
+	new ExternalsPlugin("commonjs", Object.keys(process.binding("natives"))).apply(compiler);
+};

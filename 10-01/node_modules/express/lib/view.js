@@ -75,9 +75,7 @@ function View(name, options) {
 
   if (!opts.engines[this.ext]) {
     // load engine
-    var mod = this.ext.substr(1)
-    debug('require "%s"', mod)
-    opts.engines[this.ext] = require(mod).__express
+    opts.engines[this.ext] = require(this.ext.substr(1)).__express;
   }
 
   // store loaded engine

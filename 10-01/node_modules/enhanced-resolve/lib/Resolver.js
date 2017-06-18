@@ -13,11 +13,9 @@ module.exports = Resolver;
 
 Resolver.prototype = Object.create(Tapable.prototype);
 
-Resolver.prototype.constructor = Resolver;
-
-Resolver.prototype.resolveSync = function resolveSync(context, path, request) {
+Resolver.prototype.resolveSync = function resolveSync(context, request) {
 	var err, result, sync = false;
-	this.resolve(context, path, request, function(e, r) {
+	this.resolve(context, request, function(e, r) {
 		err = e;
 		result = r;
 		sync = true;
@@ -27,60 +25,29 @@ Resolver.prototype.resolveSync = function resolveSync(context, path, request) {
 	return result;
 };
 
-Resolver.prototype.resolve = function resolve(context, path, request, callback) {
-	if(arguments.length === 3) {
-		throw new Error("Signature changed: context parameter added");
-	}
-	var resolver = this;
+Resolver.prototype.resolve = function resolve(context, request, callback) {
+	if(typeof request === "string") request = this.parse(request);
+	this.applyPlugins("resolve", context, request);
 	var obj = {
-		context: context,
-		path: path,
-		request: request
+		path: context,
+		request: request.path,
+		query: request.query,
+		directory: request.directory
 	};
-
-	var localMissing = [];
-	var missing = callback.missing ? {
-		push: function(item) {
-			callback.missing.push(item);
-			localMissing.push(item);
-		}
-	} : localMissing;
-	var log = [];
-	var message = "resolve '" + request + "' in '" + path + "'";
-
-	function writeLog(msg) {
-		log.push(msg);
-	}
-
-	function logAsString() {
-		return log.join("\n");
-	}
-
 	function onResolved(err, result) {
-		if(callback.log) {
-			for(var i = 0; i < log.length; i++)
-				callback.log(log[i]);
-		}
 		if(err) return callback(err);
-		if(!result) {
-			var error = new Error("Can't " + message);
-			error.details = logAsString();
-			error.missing = localMissing;
-			resolver.applyPlugins("no-resolve", obj, error);
-			return callback(error);
-		}
-		return callback(null, result.path === false ? false : result.path + (result.query || ""), result);
+		return callback(null, result.path === false ? false : result.path + (result.query || ""));
 	}
-	return this.doResolve("resolve", obj, message, createInnerCallback(onResolved, {
-		log: writeLog,
-		missing: missing,
-		stack: callback.stack
-	}, null));
+	onResolved.log = callback.log;
+	onResolved.missing = callback.missing;
+	if(request.module) return this.doResolve("module", obj, onResolved);
+	if(request.directory) return this.doResolve("directory", obj, onResolved);
+	return this.doResolve(["file", "directory"], obj, onResolved);
 };
 
-Resolver.prototype.doResolve = function doResolve(type, request, message, callback) {
-	var resolver = this;
-	var stackLine = type + ": (" + request.path + ") " +
+Resolver.prototype.doResolve = function doResolve(types, request, callback, noError) {
+	if(!Array.isArray(types)) types = [types];
+	var stackLine = types.join(" or ") + ": (" + request.path + ") " +
 		(request.request || "") + (request.query || "") +
 		(request.directory ? " directory" : "") +
 		(request.module ? " module" : "");
@@ -95,73 +62,94 @@ Resolver.prototype.doResolve = function doResolve(type, request, message, callba
 			return callback(recursionError);
 		}
 	}
-	resolver.applyPlugins("resolve-step", type, request);
-
-	resolver.applyPluginsAsyncSeriesBailResult1("before-" + type, request, createInnerCallback(beforeInnerCallback, {
-		log: callback.log,
-		missing: callback.missing,
-		stack: newStack
-	}, message && ("before " + message), true));
-
-	function beforeInnerCallback(err, result) {
-		if(arguments.length > 0) {
+	this.applyPlugins("resolve-step", types, request);
+	var localMissing = [];
+	var missing = callback.missing ? {
+		push: function(item) {
+			callback.missing.push(item);
+			localMissing.push(item);
+		}
+	} : localMissing;
+	var log = [];
+	function writeLog(msg) {
+		log.push(msg);
+	}
+	function logAsString() {
+		return log.join("\n");
+	}
+	var currentRequestString = request.request ? request.request + " in " + request.path : request.path;
+	if(types.length == 1 && !noError) {
+		// If only one type, we can pass the error.
+		return this.applyPluginsParallelBailResult(types[0], request, createInnerCallback(function innerCallback(err, result) {
+			if(callback.log) {
+				for(var i = 0; i < log.length; i++)
+					callback.log(log[i]);
+			}
 			if(err) return callback(err);
 			if(result) return callback(null, result);
-			return callback();
-		}
-		return resolver.applyPluginsParallelBailResult1(type, request, createInnerCallback(innerCallback, {
-			log: callback.log,
-			missing: callback.missing,
+			if(types[0] === "result") return callback(null, request);
+			var error = new Error("Cannot resolve " + types[0] + " '" + request.request + "' in " + request.path);
+			error.details = logAsString();
+			error.missing = localMissing;
+			return callback(error);
+		}, {
+			log: writeLog,
+			missing: missing,
 			stack: newStack
-		}, message));
+		}, "resolve " + types[0] + " " + currentRequestString));
 	}
-
-	function innerCallback(err, result) {
-		if(arguments.length > 0) {
-			if(err) return callback(err);
-			if(result) return callback(null, result);
-			return callback();
-		}
-		return resolver.applyPluginsAsyncSeriesBailResult1("after-" + type, request, createInnerCallback(afterInnerCallback, {
-			log: callback.log,
-			missing: callback.missing,
+	// For multiple type we list the errors in the details although some of them are not important
+	this.forEachBail(types, function(type, callback) {
+		this.applyPluginsParallelBailResult(type, request, createInnerCallback(function(err, result) {
+			if(!err && result) return callback(result);
+			if (err) {
+				(err.message || "").split("\n").forEach(function(line) {
+					log.push("  " + line);
+				});
+			}
+			callback();
+		}, {
+			log: writeLog,
+			missing: missing,
 			stack: newStack
-		}, message && ("after " + message), true));
-	}
-
-	function afterInnerCallback(err, result) {
-		if(arguments.length > 0) {
-			if(err) return callback(err);
-			if(result) return callback(null, result);
-			return callback();
+		}, "resolve " + type));
+	}.bind(this), function(result) {
+		if(callback.log) {
+			callback.log("resolve '" + types.join("' or '") + "' " + currentRequestString);
+			for(var i = 0; i < log.length; i++)
+				callback.log("  " + log[i]);
 		}
-		return callback();
-	}
+		if(noError && !result) return callback();
+		if(result) return callback(null, result);
+		var error = new Error("Cannot resolve '" + types.join("' or '") + "' " + currentRequestString);
+		error.details = logAsString();
+		error.missing = localMissing;
+		return callback(error);
+	});
 };
 
 Resolver.prototype.parse = function parse(identifier) {
 	if(identifier === "") return null;
 	var part = {
-		request: "",
-		query: "",
+		path: null,
+		query: null,
 		module: false,
 		directory: false,
 		file: false
 	};
 	var idxQuery = identifier.indexOf("?");
-	if(idxQuery === 0) {
+	if(idxQuery == 0) {
 		part.query = identifier;
 	} else if(idxQuery > 0) {
-		part.request = identifier.slice(0, idxQuery);
+		part.path = identifier.slice(0, idxQuery);
 		part.query = identifier.slice(idxQuery);
 	} else {
-		part.request = identifier;
+		part.path = identifier;
 	}
-	if(part.request) {
-		part.module = this.isModule(part.request);
-		part.directory = this.isDirectory(part.request);
-		if(part.directory) {
-			part.request = part.request.substr(0, part.request.length - 1);
+	if(part.path) {
+		part.module = this.isModule(part.path);
+		if(part.directory = this.isDirectory(part.path)) {
+			part.path = part.path.substr(0, part.path.length - 1);
 		}
 	}
 	return part;
@@ -177,14 +165,36 @@ Resolver.prototype.isDirectory = function isDirectory(path) {
 	return directoryRegExp.test(path);
 };
 
-var memoryFsJoin = require("memory-fs/lib/join");
-var memoizedJoin = {};
-Resolver.prototype.join = function(path, request) {
-	var memoizeKey = path + "|$" + request;
-	if(!memoizedJoin[memoizeKey]) {
-		memoizedJoin[memoizeKey] = memoryFsJoin(path, request);
-	}
-	return memoizedJoin[memoizeKey];
-};
+Resolver.prototype.join = require("memory-fs/lib/join");
 
 Resolver.prototype.normalize = require("memory-fs/lib/normalize");
+
+Resolver.prototype.forEachBail = function(array, iterator, callback) {
+	if(array.length == 0) return callback();
+	var currentPos = array.length;
+	var currentError, currentResult;
+	var done = [];
+	for(var i = 0; i < array.length; i++) {
+		var itCb = (function(i) {
+			return function() {
+				if(i >= currentPos) return; // ignore
+				var args = Array.prototype.slice.call(arguments);
+				done.push(i);
+				if(args.length > 0) {
+					currentPos = i + 1;
+					done = done.filter(function(item) {
+						return item <= i;
+					});
+					currentResult = args;
+				}
+				if(done.length == currentPos) {
+					callback.apply(null, currentResult);
+					currentPos = 0;
+				}
+			};
+		}(i));
+		iterator(array[i], itCb);
+		if(currentPos == 0) break;
+	}
+};
+

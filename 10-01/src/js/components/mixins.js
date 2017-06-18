@@ -3,7 +3,7 @@ const MixinLog = {
     console.log("MixinLog componentDidMount");
   },
   log(){
-    console.log("abcdefg");
+    console.log("abcdefg...");
   }
 };
 

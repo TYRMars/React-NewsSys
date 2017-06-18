@@ -2,30 +2,25 @@
 	MIT License http://www.opensource.org/licenses/mit-license.php
 	Author Tobias Koppers @sokra
 */
-"use strict";
+var ConcatSource = require("webpack-core/lib/ConcatSource");
+var Template = require("./Template");
 
-const ConcatSource = require("webpack-sources").ConcatSource;
-
-class JsonpChunkTemplatePlugin {
-	apply(chunkTemplate) {
-		chunkTemplate.plugin("render", function(modules, chunk) {
-			const jsonpFunction = this.outputOptions.jsonpFunction;
-			const source = new ConcatSource();
-			source.add(`${jsonpFunction}(${JSON.stringify(chunk.ids)},`);
-			source.add(modules);
-			const entries = [chunk.entryModule].filter(Boolean).map(m => m.id);
-			if(entries.length > 0) {
-				source.add(`,${JSON.stringify(entries)}`);
-			}
-			source.add(")");
-			return source;
-		});
-		chunkTemplate.plugin("hash", function(hash) {
-			hash.update("JsonpChunkTemplatePlugin");
-			hash.update("3");
-			hash.update(`${this.outputOptions.jsonpFunction}`);
-			hash.update(`${this.outputOptions.library}`);
-		});
-	}
-}
+function JsonpChunkTemplatePlugin() {}
 module.exports = JsonpChunkTemplatePlugin;
+
+JsonpChunkTemplatePlugin.prototype.apply = function(chunkTemplate) {
+	chunkTemplate.plugin("render", function(modules, chunk) {
+		var jsonpFunction = this.outputOptions.jsonpFunction || Template.toIdentifier("webpackJsonp" + (this.outputOptions.library || ""));
+		var source = new ConcatSource();
+		source.add(jsonpFunction + "(" + JSON.stringify(chunk.ids) + ",");
+		source.add(modules);
+		source.add(")");
+		return source;
+	});
+	chunkTemplate.plugin("hash", function(hash) {
+		hash.update("JsonpChunkTemplatePlugin");
+		hash.update("3");
+		hash.update(this.outputOptions.jsonpFunction + "");
+		hash.update(this.outputOptions.library + "");
+	});
+};

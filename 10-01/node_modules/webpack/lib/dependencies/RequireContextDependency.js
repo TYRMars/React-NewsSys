@@ -2,21 +2,16 @@
 	MIT License http://www.opensource.org/licenses/mit-license.php
 	Author Tobias Koppers @sokra
 */
-"use strict";
-const ContextDependency = require("./ContextDependency");
-const ModuleDependencyTemplateAsRequireId = require("./ModuleDependencyTemplateAsRequireId");
+var ContextDependency = require("./ContextDependency");
 
-class RequireContextDependency extends ContextDependency {
-	constructor(request, recursive, regExp, range) {
-		super(request, recursive, regExp);
-		this.range = range;
-	}
-
-	get type() {
-		return "require.context";
-	}
+function RequireContextDependency(request, recursive, regExp, range) {
+	ContextDependency.call(this, request, recursive, regExp);
+	this.range = range;
 }
-
-RequireContextDependency.Template = ModuleDependencyTemplateAsRequireId;
-
 module.exports = RequireContextDependency;
+
+RequireContextDependency.prototype = Object.create(ContextDependency.prototype);
+RequireContextDependency.prototype.constructor = RequireContextDependency;
+RequireContextDependency.prototype.type = "require.context";
+
+RequireContextDependency.Template = require("./ModuleDependencyTemplateAsRequireId");

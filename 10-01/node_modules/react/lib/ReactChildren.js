@@ -6,6 +6,7 @@
  * LICENSE file in the root directory of this source tree. An additional grant
  * of patent rights can be found in the PATENTS file in the same directory.
  *
+ * @providesModule ReactChildren
  */
 
 'use strict';
@@ -45,8 +46,8 @@ ForEachBookKeeping.prototype.destructor = function () {
 PooledClass.addPoolingTo(ForEachBookKeeping, twoArgumentPooler);
 
 function forEachSingleChild(bookKeeping, child, name) {
-  var func = bookKeeping.func,
-      context = bookKeeping.context;
+  var func = bookKeeping.func;
+  var context = bookKeeping.context;
 
   func.call(context, child, bookKeeping.count++);
 }
@@ -98,10 +99,10 @@ MapBookKeeping.prototype.destructor = function () {
 PooledClass.addPoolingTo(MapBookKeeping, fourArgumentPooler);
 
 function mapSingleChildIntoContext(bookKeeping, child, childKey) {
-  var result = bookKeeping.result,
-      keyPrefix = bookKeeping.keyPrefix,
-      func = bookKeeping.func,
-      context = bookKeeping.context;
+  var result = bookKeeping.result;
+  var keyPrefix = bookKeeping.keyPrefix;
+  var func = bookKeeping.func;
+  var context = bookKeeping.context;
 
 
   var mappedChild = func.call(context, child, bookKeeping.count++);

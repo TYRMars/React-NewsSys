@@ -2,12 +2,31 @@
 	MIT License http://www.opensource.org/licenses/mit-license.php
 	Author Tobias Koppers @sokra
 */
-"use strict";
+var LocalModule = require("./LocalModule");
 
-const LocalModule = require("./LocalModule");
-const LocalModulesHelpers = exports;
+var LocalModulesHelpers = exports;
 
-const lookup = (parent, mod) => {
+LocalModulesHelpers.addLocalModule = function(state, name) {
+	if(!state.localModules) state.localModules = [];
+	var m = new LocalModule(state.module, name, state.localModules.length);
+	state.localModules.push(m);
+	return m;
+};
+
+LocalModulesHelpers.getLocalModule = function(state, name, namedModule) {
+	if(!state.localModules) return null;
+	if(namedModule) {
+		// resolve dependency name relative to the defining named module
+		name = lookup(namedModule, name);
+	}
+	for(var i = 0; i < state.localModules.length; i++) {
+		if(state.localModules[i].name === name)
+			return state.localModules[i];
+	}
+	return null;
+};
+
+function lookup(parent, mod) {
 	if(mod.charAt(0) !== ".") return mod;
 
 	var path = parent.split("/"),
@@ -21,26 +40,4 @@ const lookup = (parent, mod) => {
 	}
 
 	return path.join("/");
-};
-
-LocalModulesHelpers.addLocalModule = (state, name) => {
-	if(!state.localModules) state.localModules = [];
-	var m = new LocalModule(state.module, name, state.localModules.length);
-	state.localModules.push(m);
-	return m;
-};
-
-LocalModulesHelpers.getLocalModule = (state, name, namedModule) => {
-	if(!state.localModules) return null;
-	if(namedModule) {
-		// resolve dependency name relative to the defining named module
-		name = lookup(namedModule, name);
-	}
-	for(var i = 0; i < state.localModules.length; i++) {
-		if(state.localModules[i].name === name)
-			return state.localModules[i];
-	}
-	return null;
-};
-
-module.exports = LocalModulesHelpers;
+}

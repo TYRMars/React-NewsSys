@@ -6,13 +6,14 @@
  * LICENSE file in the root directory of this source tree. An additional grant
  * of patent rights can be found in the PATENTS file in the same directory.
  *
+ * @providesModule ReactTransitionEvents
  */
 
 'use strict';
 
 var ExecutionEnvironment = require('fbjs/lib/ExecutionEnvironment');
 
-var getVendorPrefixedEventName = require('react-dom/lib/getVendorPrefixedEventName');
+var getVendorPrefixedEventName = require('./getVendorPrefixedEventName');
 
 var endEvents = [];
 

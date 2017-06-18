@@ -6,21 +6,24 @@ var path = require("path");
 var Tapable = require("tapable");
 
 var Compilation = require("./Compilation");
-var Stats = require("./Stats");
+var Parser = require("./Parser");
+var Resolver = require("enhanced-resolve/lib/Resolver");
+
 var NormalModuleFactory = require("./NormalModuleFactory");
 var ContextModuleFactory = require("./ContextModuleFactory");
 
 function Watching(compiler, watchOptions, handler) {
 	this.startTime = null;
 	this.invalid = false;
+	this.error = null;
+	this.stats = null;
 	this.handler = handler;
-	this.closed = false;
 	if(typeof watchOptions === "number") {
 		this.watchOptions = {
 			aggregateTimeout: watchOptions
 		};
 	} else if(watchOptions && typeof watchOptions === "object") {
-		this.watchOptions = Object.assign({}, watchOptions);
+		this.watchOptions = Object.create(watchOptions);
 	} else {
 		this.watchOptions = {};
 	}
@@ -35,91 +38,66 @@ function Watching(compiler, watchOptions, handler) {
 }
 
 Watching.prototype._go = function() {
-	var self = this;
-	self.startTime = Date.now();
-	self.running = true;
-	self.invalid = false;
-	self.compiler.applyPluginsAsync("watch-run", self, function(err) {
-		if(err) return self._done(err);
-		self.compiler.compile(function onCompiled(err, compilation) {
-			if(err) return self._done(err);
-			if(self.invalid) return self._done();
+	this.startTime = new Date().getTime();
+	this.running = true;
+	this.invalid = false;
+	this.compiler.applyPluginsAsync("watch-run", this, function(err) {
+		if(err) return this._done(err);
+		this.compiler.compile(function(err, compilation) {
+			if(err) return this._done(err);
+			if(this.invalid) return this._done();
 
-			if(self.compiler.applyPluginsBailResult("should-emit", compilation) === false) {
-				return self._done(null, compilation);
+			if(this.compiler.applyPluginsBailResult("should-emit", compilation) === false) {
+				return this._done(null, compilation);
 			}
 
-			self.compiler.emitAssets(compilation, function(err) {
-				if(err) return self._done(err);
-				if(self.invalid) return self._done();
+			this.compiler.emitAssets(compilation, function(err) {
+				if(err) return this._done(err);
+				if(this.invalid) return this._done();
 
-				self.compiler.emitRecords(function(err) {
-					if(err) return self._done(err);
+				this.compiler.emitRecords(function(err) {
+					if(err) return this._done(err);
 
-					if(compilation.applyPluginsBailResult("need-additional-pass")) {
-						compilation.needAdditionalPass = true;
-
-						var stats = new Stats(compilation);
-						stats.startTime = self.startTime;
-						stats.endTime = Date.now();
-						self.compiler.applyPlugins("done", stats);
-
-						self.compiler.applyPluginsAsync("additional-pass", function(err) {
-							if(err) return self._done(err);
-							self.compiler.compile(onCompiled);
-						});
-						return;
-					}
-					return self._done(null, compilation);
-				});
-			});
-		});
-	});
-};
-
-Watching.prototype._getStats = function(compilation) {
-	var stats = new Stats(compilation);
-	stats.startTime = this.startTime;
-	stats.endTime = Date.now();
-	return stats;
+					return this._done(null, compilation);
+				}.bind(this));
+			}.bind(this));
+		}.bind(this));
+	}.bind(this));
 };
 
 Watching.prototype._done = function(err, compilation) {
 	this.running = false;
 	if(this.invalid) return this._go();
-
-	var stats = compilation ? this._getStats(compilation) : null;
-	if(err) {
-		this.compiler.applyPlugins("failed", err);
-		this.handler(err, stats);
-		return;
+	this.error = err || null;
+	this.stats = compilation ? compilation.getStats() : null;
+	if(this.stats) {
+		this.stats.startTime = this.startTime;
+		this.stats.endTime = new Date().getTime();
 	}
-
-	this.compiler.applyPlugins("done", stats);
-	this.handler(null, stats);
-	if(!this.closed) {
+	if(this.stats)
+		this.compiler.applyPlugins("done", this.stats);
+	else
+		this.compiler.applyPlugins("failed", this.error);
+	this.handler(this.error, this.stats);
+	if(!this.error)
 		this.watch(compilation.fileDependencies, compilation.contextDependencies, compilation.missingDependencies);
-	}
 };
 
 Watching.prototype.watch = function(files, dirs, missing) {
-	this.pausedWatcher = null;
 	this.watcher = this.compiler.watchFileSystem.watch(files, dirs, missing, this.startTime, this.watchOptions, function(err, filesModified, contextModified, missingModified, fileTimestamps, contextTimestamps) {
-		this.pausedWatcher = this.watcher;
 		this.watcher = null;
 		if(err) return this.handler(err);
 
 		this.compiler.fileTimestamps = fileTimestamps;
 		this.compiler.contextTimestamps = contextTimestamps;
 		this.invalidate();
-	}.bind(this), function(fileName, changeTime) {
-		this.compiler.applyPlugins("invalid", fileName, changeTime);
+	}.bind(this), function() {
+		this.compiler.applyPlugins("invalid");
 	}.bind(this));
 };
 
 Watching.prototype.invalidate = function() {
 	if(this.watcher) {
-		this.pausedWatcher = this.watcher;
 		this.watcher.pause();
 		this.watcher = null;
 	}
@@ -134,23 +112,16 @@ Watching.prototype.invalidate = function() {
 Watching.prototype.close = function(callback) {
 	if(callback === undefined) callback = function() {};
 
-	this.closed = true;
 	if(this.watcher) {
 		this.watcher.close();
 		this.watcher = null;
 	}
-	if(this.pausedWatcher) {
-		this.pausedWatcher.close();
-		this.pausedWatcher = null;
-	}
 	if(this.running) {
 		this.invalid = true;
-		this._done = () => {
-			this.compiler.applyPlugins("watch-close");
+		this._done = function() {
 			callback();
 		};
 	} else {
-		this.compiler.applyPlugins("watch-close");
 		callback();
 	}
 };
@@ -170,40 +141,11 @@ function Compiler() {
 	this.contextTimestamps = {};
 
 	this.resolvers = {
-		normal: null,
-		loader: null,
-		context: null
+		normal: new Resolver(null),
+		loader: new Resolver(null),
+		context: new Resolver(null)
 	};
-	var deprecationReported = false;
-	this.parser = {
-		plugin: function(hook, fn) {
-			if(!deprecationReported) {
-				console.warn("webpack: Using compiler.parser is deprecated.\n" +
-					"Use compiler.plugin(\"compilation\", function(compilation, data) {\n  data.normalModuleFactory.plugin(\"parser\", function(parser, options) { parser.plugin(/* ... */); });\n}); instead. " +
-					"It was called " + new Error().stack.split("\n")[2].trim() + ".");
-				deprecationReported = true;
-			}
-			this.plugin("compilation", function(compilation, data) {
-				data.normalModuleFactory.plugin("parser", function(parser) {
-					parser.plugin(hook, fn);
-				});
-			});
-		}.bind(this),
-		apply: function() {
-			var args = arguments;
-			if(!deprecationReported) {
-				console.warn("webpack: Using compiler.parser is deprecated.\n" +
-					"Use compiler.plugin(\"compilation\", function(compilation, data) {\n  data.normalModuleFactory.plugin(\"parser\", function(parser, options) { parser.apply(/* ... */); });\n}); instead. " +
-					"It was called " + new Error().stack.split("\n")[2].trim() + ".");
-				deprecationReported = true;
-			}
-			this.plugin("compilation", function(compilation, data) {
-				data.normalModuleFactory.plugin("parser", function(parser) {
-					parser.apply.apply(parser, args);
-				});
-			});
-		}.bind(this)
-	};
+	this.parser = new Parser();
 
 	this.options = {};
 }
@@ -221,61 +163,40 @@ Compiler.prototype.watch = function(watchOptions, handler) {
 };
 
 Compiler.prototype.run = function(callback) {
-	var self = this;
-	var startTime = Date.now();
-
-	self.applyPluginsAsync("before-run", self, function(err) {
+	var startTime = new Date().getTime();
+	this.applyPluginsAsync("run", this, function(err) {
 		if(err) return callback(err);
 
-		self.applyPluginsAsync("run", self, function(err) {
+		this.readRecords(function(err) {
 			if(err) return callback(err);
 
-			self.readRecords(function(err) {
+			this.compile(function(err, compilation) {
 				if(err) return callback(err);
 
-				self.compile(function onCompiled(err, compilation) {
+				if(this.applyPluginsBailResult("should-emit", compilation) === false) {
+					var stats = compilation.getStats();
+					stats.startTime = startTime;
+					stats.endTime = new Date().getTime();
+					this.applyPlugins("done", stats);
+					return callback(null, stats);
+				}
+
+				this.emitAssets(compilation, function(err) {
 					if(err) return callback(err);
 
-					if(self.applyPluginsBailResult("should-emit", compilation) === false) {
-						var stats = new Stats(compilation);
-						stats.startTime = startTime;
-						stats.endTime = Date.now();
-						self.applyPlugins("done", stats);
-						return callback(null, stats);
-					}
-
-					self.emitAssets(compilation, function(err) {
+					this.emitRecords(function(err) {
 						if(err) return callback(err);
 
-						if(compilation.applyPluginsBailResult("need-additional-pass")) {
-							compilation.needAdditionalPass = true;
-
-							var stats = new Stats(compilation);
-							stats.startTime = startTime;
-							stats.endTime = Date.now();
-							self.applyPlugins("done", stats);
-
-							self.applyPluginsAsync("additional-pass", function(err) {
-								if(err) return callback(err);
-								self.compile(onCompiled);
-							});
-							return;
-						}
-
-						self.emitRecords(function(err) {
-							if(err) return callback(err);
-
-							var stats = new Stats(compilation);
-							stats.startTime = startTime;
-							stats.endTime = Date.now();
-							self.applyPlugins("done", stats);
-							return callback(null, stats);
-						});
-					});
-				});
-			});
-		});
-	});
+						var stats = compilation.getStats();
+						stats.startTime = startTime;
+						stats.endTime = new Date().getTime();
+						this.applyPlugins("done", stats);
+						return callback(null, stats);
+					}.bind(this));
+				}.bind(this));
+			}.bind(this));
+		}.bind(this));
+	}.bind(this));
 };
 
 Compiler.prototype.runAsChild = function(callback) {
@@ -287,12 +208,9 @@ Compiler.prototype.runAsChild = function(callback) {
 			this.parentCompilation.assets[name] = compilation.assets[name];
 		}.bind(this));
 
-		var entries = Object.keys(compilation.entrypoints).map(function(name) {
-			return compilation.entrypoints[name].chunks;
-		}).reduce(function(array, chunks) {
-			return array.concat(chunks);
-		}, []);
-
+		var entries = compilation.chunks.filter(function(chunk) {
+			return chunk.entry;
+		});
 		return callback(null, entries, compilation);
 	}.bind(this));
 };
@@ -336,11 +254,8 @@ Compiler.prototype.emitAssets = function(compilation, callback) {
 					return callback();
 				}
 				var content = source.source();
-
-				if(!Buffer.isBuffer(content)) {
-					content = new Buffer(content, "utf8"); //eslint-disable-line
-				}
-
+				if(!Buffer.isBuffer(content))
+					content = new Buffer(content, "utf-8");
 				source.existsAt = targetPath;
 				source.emitted = true;
 				this.outputFileSystem.writeFile(targetPath, content, callback);
@@ -354,7 +269,7 @@ Compiler.prototype.emitAssets = function(compilation, callback) {
 	}
 
 	function afterEmit() {
-		this.applyPluginsAsyncSeries1("after-emit", compilation, function(err) {
+		this.applyPluginsAsync("after-emit", compilation, function(err) {
 			if(err) return callback(err);
 
 			return callback();
@@ -382,36 +297,32 @@ Compiler.prototype.emitRecords = function emitRecords(callback) {
 };
 
 Compiler.prototype.readRecords = function readRecords(callback) {
-	var self = this;
-	if(!self.recordsInputPath) {
-		self.records = {};
+	if(!this.recordsInputPath) {
+		this.records = {};
 		return callback();
 	}
-	self.inputFileSystem.stat(self.recordsInputPath, function(err) {
+	this.inputFileSystem.stat(this.recordsInputPath, function(err) {
 		// It doesn't exist
-		// We can ignore self.
+		// We can ignore this.
 		if(err) return callback();
 
-		self.inputFileSystem.readFile(self.recordsInputPath, function(err, content) {
+		this.inputFileSystem.readFile(this.recordsInputPath, function(err, content) {
 			if(err) return callback(err);
 
 			try {
-				self.records = JSON.parse(content.toString("utf-8"));
+				this.records = JSON.parse(content);
 			} catch(e) {
 				e.message = "Cannot parse records: " + e.message;
 				return callback(e);
 			}
 
 			return callback();
-		});
-	});
+		}.bind(this));
+	}.bind(this));
 };
 
-Compiler.prototype.createChildCompiler = function(compilation, compilerName, outputOptions, plugins) {
+Compiler.prototype.createChildCompiler = function(compilation, compilerName, outputOptions) {
 	var childCompiler = new Compiler();
-	if(Array.isArray(plugins)) {
-		plugins.forEach(plugin => childCompiler.apply(plugin));
-	}
 	for(var name in this._plugins) {
 		if(["make", "compile", "emit", "after-emit", "invalid", "done", "this-compilation"].indexOf(name) < 0)
 			childCompiler._plugins[name] = this._plugins[name].slice();
@@ -421,6 +332,7 @@ Compiler.prototype.createChildCompiler = function(compilation, compilerName, out
 	childCompiler.inputFileSystem = this.inputFileSystem;
 	childCompiler.outputFileSystem = null;
 	childCompiler.resolvers = this.resolvers;
+	childCompiler.parser = this.parser;
 	childCompiler.fileTimestamps = this.fileTimestamps;
 	childCompiler.contextTimestamps = this.contextTimestamps;
 	if(!this.records[compilerName]) this.records[compilerName] = [];
@@ -448,14 +360,13 @@ Compiler.prototype.newCompilation = function(params) {
 	compilation.contextTimestamps = this.contextTimestamps;
 	compilation.name = this.name;
 	compilation.records = this.records;
-	compilation.compilationDependencies = params.compilationDependencies;
 	this.applyPlugins("this-compilation", compilation, params);
 	this.applyPlugins("compilation", compilation, params);
 	return compilation;
 };
 
 Compiler.prototype.createNormalModuleFactory = function() {
-	var normalModuleFactory = new NormalModuleFactory(this.options.context, this.resolvers, this.options.module || {});
+	var normalModuleFactory = new NormalModuleFactory(this.options.context, this.resolvers, this.parser, this.options.module || {});
 	this.applyPlugins("normal-module-factory", normalModuleFactory);
 	return normalModuleFactory;
 };
@@ -469,36 +380,28 @@ Compiler.prototype.createContextModuleFactory = function() {
 Compiler.prototype.newCompilationParams = function() {
 	var params = {
 		normalModuleFactory: this.createNormalModuleFactory(),
-		contextModuleFactory: this.createContextModuleFactory(),
-		compilationDependencies: []
+		contextModuleFactory: this.createContextModuleFactory()
 	};
 	return params;
 };
 
 Compiler.prototype.compile = function(callback) {
-	var self = this;
-	var params = self.newCompilationParams();
-	self.applyPluginsAsync("before-compile", params, function(err) {
+	var params = this.newCompilationParams();
+	this.applyPlugins("compile", params);
+
+	var compilation = this.newCompilation(params);
+
+	this.applyPluginsParallel("make", compilation, function(err) {
 		if(err) return callback(err);
 
-		self.applyPlugins("compile", params);
-
-		var compilation = self.newCompilation(params);
-
-		self.applyPluginsParallel("make", compilation, function(err) {
+		compilation.seal(function(err) {
 			if(err) return callback(err);
 
-			compilation.finish();
-
-			compilation.seal(function(err) {
+			this.applyPluginsAsync("after-compile", compilation, function(err) {
 				if(err) return callback(err);
 
-				self.applyPluginsAsync("after-compile", compilation, function(err) {
-					if(err) return callback(err);
-
-					return callback(null, compilation);
-				});
+				return callback(null, compilation);
 			});
-		});
-	});
+		}.bind(this));
+	}.bind(this));
 };

@@ -2,25 +2,18 @@
 	MIT License http://www.opensource.org/licenses/mit-license.php
 	Author Tobias Koppers @sokra
 */
-"use strict";
 var Template = require("./Template");
+var BasicEvaluatedExpression = require("./BasicEvaluatedExpression");
 var ModuleHotAcceptDependency = require("./dependencies/ModuleHotAcceptDependency");
 var ModuleHotDeclineDependency = require("./dependencies/ModuleHotDeclineDependency");
-var RawSource = require("webpack-sources").RawSource;
+var RawSource = require("webpack-core/lib/RawSource");
 var ConstDependency = require("./dependencies/ConstDependency");
 var NullFactory = require("./NullFactory");
-const ParserHelpers = require("./ParserHelpers");
 
-function HotModuleReplacementPlugin(options) {
-	options = options || {};
-	this.multiStep = options.multiStep;
-	this.fullBuildTimeout = options.fullBuildTimeout || 200;
-}
+function HotModuleReplacementPlugin() {}
 module.exports = HotModuleReplacementPlugin;
 
 HotModuleReplacementPlugin.prototype.apply = function(compiler) {
-	var multiStep = this.multiStep;
-	var fullBuildTimeout = this.fullBuildTimeout;
 	var hotUpdateChunkFilename = compiler.options.output.hotUpdateChunkFilename;
 	var hotUpdateMainFilename = compiler.options.output.hotUpdateMainFilename;
 	compiler.plugin("compilation", function(compilation, params) {
@@ -59,39 +52,18 @@ HotModuleReplacementPlugin.prototype.apply = function(compiler) {
 				});
 			});
 		});
-		var initialPass = false;
-		var recompilation = false;
 		compilation.plugin("after-hash", function() {
 			var records = this.records;
-			if(!records) {
-				initialPass = true;
-				return;
-			}
-			if(!records.hash)
-				initialPass = true;
+			if(!records) return;
 			var preHash = records.preHash || "x";
 			var prepreHash = records.prepreHash || "x";
 			if(preHash === this.hash) {
-				recompilation = true;
 				this.modifyHash(prepreHash);
 				return;
 			}
 			records.prepreHash = records.hash || "x";
 			records.preHash = this.hash;
 			this.modifyHash(records.prepreHash);
-		});
-		compilation.plugin("should-generate-chunk-assets", function() {
-			if(multiStep && !recompilation && !initialPass)
-				return false;
-		});
-		compilation.plugin("need-additional-pass", function() {
-			if(multiStep && !recompilation && !initialPass)
-				return true;
-		});
-		compiler.plugin("additional-pass", function(callback) {
-			if(multiStep)
-				return setTimeout(callback, fullBuildTimeout);
-			return callback();
 		});
 		compilation.plugin("additional-chunk-assets", function() {
 			var records = this.records;
@@ -106,36 +78,29 @@ HotModuleReplacementPlugin.prototype.apply = function(compiler) {
 			});
 			var hotUpdateMainContent = {
 				h: this.hash,
-				c: {}
+				c: []
 			};
 			Object.keys(records.chunkHashs).forEach(function(chunkId) {
-				chunkId = isNaN(+chunkId) ? chunkId : +chunkId;
-				var currentChunk = this.chunks.find(chunk => chunk.id === chunkId);
+				chunkId = +chunkId;
+				var currentChunk = this.chunks.filter(function(chunk) {
+					return chunk.id === chunkId;
+				})[0];
 				if(currentChunk) {
 					var newModules = currentChunk.modules.filter(function(module) {
 						return module.hotUpdate;
 					});
-					var allModules = {};
-					currentChunk.modules.forEach(function(module) {
-						allModules[module.id] = true;
-					});
-					var removedModules = records.chunkModuleIds[chunkId].filter(function(id) {
-						return !allModules[id];
-					});
-					if(newModules.length > 0 || removedModules.length > 0) {
-						var source = hotUpdateChunkTemplate.render(chunkId, newModules, removedModules, this.hash, this.moduleTemplate, this.dependencyTemplates);
+					if(newModules.length > 0) {
+						var source = hotUpdateChunkTemplate.render(chunkId, newModules, this.hash, this.moduleTemplate, this.dependencyTemplates);
 						var filename = this.getPath(hotUpdateChunkFilename, {
 							hash: records.hash,
 							chunk: currentChunk
 						});
 						this.additionalChunkAssets.push(filename);
 						this.assets[filename] = source;
-						hotUpdateMainContent.c[chunkId] = true;
+						hotUpdateMainContent.c.push(chunkId);
 						currentChunk.files.push(filename);
 						this.applyPlugins("chunk-asset", currentChunk, filename);
 					}
-				} else {
-					hotUpdateMainContent.c[chunkId] = false;
 				}
 			}, this);
 			var source = new RawSource(JSON.stringify(hotUpdateMainContent));
@@ -169,7 +134,7 @@ HotModuleReplacementPlugin.prototype.apply = function(compiler) {
 				hotInitCode
 				.replace(/\$require\$/g, this.requireFn)
 				.replace(/\$hash\$/g, JSON.stringify(hash))
-				.replace(/\/\*foreachInstalledChunks\*\//g, chunk.chunks.length > 0 ? "for(var chunkId in installedChunks)" : "var chunkId = " + JSON.stringify(chunk.id) + ";")
+				.replace(/\/\*foreachInstalledChunks\*\//g, chunk.chunks.length > 0 ? "for(var chunkId in installedChunks)" : "var chunkId = " + chunk.id + ";")
 			]);
 		});
 
@@ -188,72 +153,71 @@ HotModuleReplacementPlugin.prototype.apply = function(compiler) {
 			return this.asString([
 				source + ",",
 				"hot: hotCreateModule(" + varModuleId + "),",
-				"parents: (hotCurrentParentsTemp = hotCurrentParents, hotCurrentParents = [], hotCurrentParentsTemp),",
+				"parents: hotCurrentParents,",
 				"children: []"
 			]);
 		});
 
-		params.normalModuleFactory.plugin("parser", function(parser, parserOptions) {
-			parser.plugin("expression __webpack_hash__", ParserHelpers.toConstantDependency("__webpack_require__.h()"));
-			parser.plugin("evaluate typeof __webpack_hash__", ParserHelpers.evaluateToString("string"));
-			parser.plugin("evaluate Identifier module.hot", function(expr) {
-				return ParserHelpers.evaluateToBoolean(!!this.state.compilation.hotUpdateChunkTemplate)(expr);
-			});
-			parser.plugin("call module.hot.accept", function(expr) {
-				if(!this.state.compilation.hotUpdateChunkTemplate) return false;
-				if(expr.arguments.length >= 1) {
-					var arg = this.evaluateExpression(expr.arguments[0]);
-					var params = [],
-						requests = [];
-					if(arg.isString()) {
-						params = [arg];
-					} else if(arg.isArray()) {
-						params = arg.items.filter(function(param) {
-							return param.isString();
-						});
-					}
-					if(params.length > 0) {
-						params.forEach(function(param, idx) {
-							var request = param.string;
-							var dep = new ModuleHotAcceptDependency(request, param.range);
-							dep.optional = true;
-							dep.loc = Object.create(expr.loc);
-							dep.loc.index = idx;
-							this.state.module.addDependency(dep);
-							requests.push(request);
-						}.bind(this));
-						if(expr.arguments.length > 1)
-							this.applyPluginsBailResult("hot accept callback", expr.arguments[1], requests);
-						else
-							this.applyPluginsBailResult("hot accept without callback", expr, requests);
-					}
-				}
-			});
-			parser.plugin("call module.hot.decline", function(expr) {
-				if(!this.state.compilation.hotUpdateChunkTemplate) return false;
-				if(expr.arguments.length === 1) {
-					var arg = this.evaluateExpression(expr.arguments[0]);
-					var params = [];
-					if(arg.isString()) {
-						params = [arg];
-					} else if(arg.isArray()) {
-						params = arg.items.filter(function(param) {
-							return param.isString();
-						});
-					}
-					params.forEach(function(param, idx) {
-						var dep = new ModuleHotDeclineDependency(param.string, param.range);
-						dep.optional = true;
-						dep.loc = Object.create(expr.loc);
-						dep.loc.index = idx;
-						this.state.module.addDependency(dep);
-					}.bind(this));
-				}
-			});
-			parser.plugin("expression module.hot", ParserHelpers.skipTraversal);
-		});
 	});
-
+	compiler.parser.plugin("expression __webpack_hash__", function(expr) {
+		var dep = new ConstDependency("__webpack_require__.h()", expr.range);
+		dep.loc = expr.loc;
+		this.state.current.addDependency(dep);
+		return true;
+	});
+	compiler.parser.plugin("evaluate typeof __webpack_hash__", function(expr) {
+		return new BasicEvaluatedExpression().setString("string").setRange(expr.range);
+	});
+	compiler.parser.plugin("evaluate Identifier module.hot", function(expr) {
+		return new BasicEvaluatedExpression()
+			.setBoolean(!!this.state.compilation.hotUpdateChunkTemplate)
+			.setRange(expr.range);
+	});
+	compiler.parser.plugin("call module.hot.accept", function(expr) {
+		if(!this.state.compilation.hotUpdateChunkTemplate) return false;
+		if(expr.arguments.length > 1) {
+			var arg = this.evaluateExpression(expr.arguments[0]);
+			var params = [];
+			if(arg.isString()) {
+				params = [arg];
+			} else if(arg.isArray()) {
+				params = arg.items.filter(function(param) {
+					return param.isString();
+				});
+			}
+			params.forEach(function(param, idx) {
+				var dep = new ModuleHotAcceptDependency(param.string, param.range);
+				dep.optional = true;
+				dep.loc = Object.create(expr.loc);
+				dep.loc.index = idx;
+				this.state.module.addDependency(dep);
+			}.bind(this));
+		}
+	});
+	compiler.parser.plugin("call module.hot.decline", function(expr) {
+		if(!this.state.compilation.hotUpdateChunkTemplate) return false;
+		if(expr.arguments.length === 1) {
+			var arg = this.evaluateExpression(expr.arguments[0]);
+			var params = [];
+			if(arg.isString()) {
+				params = [arg];
+			} else if(arg.isArray()) {
+				params = arg.items.filter(function(param) {
+					return param.isString();
+				});
+			}
+			params.forEach(function(param, idx) {
+				var dep = new ModuleHotDeclineDependency(param.string, param.range);
+				dep.optional = true;
+				dep.loc = Object.create(expr.loc);
+				dep.loc.index = idx;
+				this.state.module.addDependency(dep);
+			}.bind(this));
+		}
+	});
+	compiler.parser.plugin("expression module.hot", function() {
+		return true;
+	});
 };
 
 var hotInitCode = Template.getFunctionContent(require("./HotModuleReplacement.runtime.js"));

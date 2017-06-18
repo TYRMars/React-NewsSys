@@ -4,12 +4,26 @@
 */
 /*globals window __webpack_hash__ */
 if(module.hot) {
-	var lastHash;
+	var lastData;
 	var upToDate = function upToDate() {
-		return lastHash.indexOf(__webpack_hash__) >= 0;
+		return lastData.indexOf(__webpack_hash__) >= 0;
 	};
 	var check = function check() {
-		module.hot.check(true).then(function(updatedModules) {
+		module.hot.check(true, function(err, updatedModules) {
+			if(err) {
+				if(module.hot.status() in {
+						abort: 1,
+						fail: 1
+					}) {
+					console.warn("[HMR] Cannot apply update. Need to do a full reload!");
+					console.warn("[HMR] " + err.stack || err.message);
+					window.location.reload();
+				} else {
+					console.warn("[HMR] Update failed: " + err.stack || err.message);
+				}
+				return;
+			}
+
 			if(!updatedModules) {
 				console.warn("[HMR] Cannot find update. Need to do a full reload!");
 				console.warn("[HMR] (Probably because of restarting the webpack-dev-server)");
@@ -27,23 +41,20 @@ if(module.hot) {
 				console.log("[HMR] App is up to date.");
 			}
 
-		}).catch(function(err) {
-			var status = module.hot.status();
-			if(["abort", "fail"].indexOf(status) >= 0) {
-				console.warn("[HMR] Cannot apply update. Need to do a full reload!");
-				console.warn("[HMR] " + err.stack || err.message);
-				window.location.reload();
-			} else {
-				console.warn("[HMR] Update failed: " + err.stack || err.message);
-			}
 		});
 	};
-	var hotEmitter = require("./emitter");
-	hotEmitter.on("webpackHotUpdate", function(currentHash) {
-		lastHash = currentHash;
-		if(!upToDate() && module.hot.status() === "idle") {
-			console.log("[HMR] Checking for updates on the server...");
-			check();
+	var addEventListener = window.addEventListener ? function(eventName, listener) {
+		window.addEventListener(eventName, listener, false);
+	} : function(eventName, listener) {
+		window.attachEvent("on" + eventName, listener);
+	};
+	addEventListener("message", function(event) {
+		if(typeof event.data === "string" && event.data.indexOf("webpackHotUpdate") === 0) {
+			lastData = event.data;
+			if(!upToDate() && module.hot.status() === "idle") {
+				console.log("[HMR] Checking for updates on the server...");
+				check();
+			}
 		}
 	});
 	console.log("[HMR] Waiting for update signal from WDS...");

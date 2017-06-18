@@ -2,45 +2,43 @@
 	MIT License http://www.opensource.org/licenses/mit-license.php
 	Author Tobias Koppers @sokra
 */
-"use strict";
-
-const Compiler = require("./Compiler");
-const MultiCompiler = require("./MultiCompiler");
-const NodeEnvironmentPlugin = require("./node/NodeEnvironmentPlugin");
-const WebpackOptionsApply = require("./WebpackOptionsApply");
-const WebpackOptionsDefaulter = require("./WebpackOptionsDefaulter");
-const validateSchema = require("./validateSchema");
-const WebpackOptionsValidationError = require("./WebpackOptionsValidationError");
-const webpackOptionsSchema = require("../schemas/webpackOptionsSchema.json");
+var Compiler = require("./Compiler");
+var MultiCompiler = require("./MultiCompiler");
+var NodeEnvironmentPlugin = require("./node/NodeEnvironmentPlugin");
+var WebpackOptionsApply = require("./WebpackOptionsApply");
+var WebpackOptionsDefaulter = require("./WebpackOptionsDefaulter");
 
 function webpack(options, callback) {
-	const webpackOptionsValidationErrors = validateSchema(webpackOptionsSchema, options);
-	if(webpackOptionsValidationErrors.length) {
-		throw new WebpackOptionsValidationError(webpackOptionsValidationErrors);
-	}
-	let compiler;
+	var compiler;
 	if(Array.isArray(options)) {
-		compiler = new MultiCompiler(options.map(options => webpack(options)));
+		compiler = new MultiCompiler(options.map(function(options) {
+			return webpack(options);
+		}));
 	} else if(typeof options === "object") {
 		new WebpackOptionsDefaulter().process(options);
 
 		compiler = new Compiler();
-		compiler.context = options.context;
 		compiler.options = options;
+		compiler.options = new WebpackOptionsApply().process(options, compiler);
 		new NodeEnvironmentPlugin().apply(compiler);
-		if(options.plugins && Array.isArray(options.plugins)) {
-			compiler.apply.apply(compiler, options.plugins);
-		}
 		compiler.applyPlugins("environment");
 		compiler.applyPlugins("after-environment");
-		compiler.options = new WebpackOptionsApply().process(options, compiler);
 	} else {
 		throw new Error("Invalid argument: options");
 	}
 	if(callback) {
 		if(typeof callback !== "function") throw new Error("Invalid argument: callback");
-		if(options.watch === true || (Array.isArray(options) && options.some(o => o.watch))) {
-			const watchOptions = Array.isArray(options) ? options.map(o => o.watchOptions || {}) : (options.watchOptions || {});
+		if(options.watch === true || (Array.isArray(options) &&
+				options.some(function(o) {
+					return o.watch;
+				}))) {
+			var watchOptions = (!Array.isArray(options) ? options : options[0]).watchOptions || {};
+			// TODO remove this in next major version
+			var watchDelay = (!Array.isArray(options) ? options : options[0]).watchDelay;
+			if(watchDelay) {
+				console.warn("options.watchDelay is deprecated: Use 'options.watchOptions.aggregateTimeout' instead");
+				watchOptions.aggregateTimeout = watchDelay;
+			}
 			return compiler.watch(watchOptions, callback);
 		}
 		compiler.run(callback);
@@ -54,17 +52,14 @@ webpack.WebpackOptionsApply = WebpackOptionsApply;
 webpack.Compiler = Compiler;
 webpack.MultiCompiler = MultiCompiler;
 webpack.NodeEnvironmentPlugin = NodeEnvironmentPlugin;
-webpack.validate = validateSchema.bind(this, webpackOptionsSchema);
-webpack.validateSchema = validateSchema;
-webpack.WebpackOptionsValidationError = WebpackOptionsValidationError;
 
 function exportPlugins(exports, path, plugins) {
-	plugins.forEach(name => {
+	plugins.forEach(function(name) {
 		Object.defineProperty(exports, name, {
 			configurable: false,
 			enumerable: true,
-			get() {
-				return require(`${path}/${name}`);
+			get: function() {
+				return require(path + "/" + name);
 			}
 		});
 	});
@@ -81,6 +76,7 @@ exportPlugins(exports, ".", [
 	"AutomaticPrefetchPlugin",
 	"ProvidePlugin",
 	"HotModuleReplacementPlugin",
+	"ResolverPlugin",
 	"SourceMapDevToolPlugin",
 	"EvalSourceMapDevToolPlugin",
 	"EvalDevToolModulePlugin",
@@ -95,26 +91,23 @@ exportPlugins(exports, ".", [
 	"SetVarMainTemplatePlugin",
 	"UmdMainTemplatePlugin",
 	"NoErrorsPlugin",
-	"NoEmitOnErrorsPlugin",
 	"NewWatchingPlugin",
+	"OldWatchingPlugin",
 	"EnvironmentPlugin",
 	"DllPlugin",
 	"DllReferencePlugin",
-	"LoaderOptionsPlugin",
-	"NamedModulesPlugin",
-	"NamedChunksPlugin",
-	"HashedModuleIdsPlugin",
-	"ModuleFilenameHelpers"
+	"NamedModulesPlugin"
 ]);
 exportPlugins(exports.optimize = {}, "./optimize", [
 	"AggressiveMergingPlugin",
-	"AggressiveSplittingPlugin",
 	"CommonsChunkPlugin",
-	"ChunkModuleIdRangePlugin",
 	"DedupePlugin",
 	"LimitChunkCountPlugin",
 	"MinChunkSizePlugin",
+	"OccurenceOrderPlugin",
 	"OccurrenceOrderPlugin",
 	"UglifyJsPlugin"
 ]);
-exportPlugins(exports.dependencies = {}, "./dependencies", []);
+exportPlugins(exports.dependencies = {}, "./dependencies", [
+	"LabeledModulesPlugin"
+]);

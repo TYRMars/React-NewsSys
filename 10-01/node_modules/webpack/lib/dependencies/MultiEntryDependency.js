@@ -2,19 +2,15 @@
 	MIT License http://www.opensource.org/licenses/mit-license.php
 	Author Tobias Koppers @sokra
 */
-"use strict";
-const Dependency = require("../Dependency");
+var Dependency = require("../Dependency");
 
-class MultiEntryDependency extends Dependency {
-	constructor(dependencies, name) {
-		super();
-		this.dependencies = dependencies;
-		this.name = name;
-	}
-
-	get type() {
-		return "multi entry";
-	}
+function MultiEntryDependency(dependencies, name) {
+	Dependency.call(this);
+	this.dependencies = dependencies;
+	this.name = name;
 }
-
 module.exports = MultiEntryDependency;
+
+MultiEntryDependency.prototype = Object.create(Dependency.prototype);
+MultiEntryDependency.prototype.constructor = MultiEntryDependency;
+MultiEntryDependency.prototype.type = "multi entry";

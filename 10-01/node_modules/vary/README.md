@@ -10,17 +10,11 @@ Manipulate the HTTP Vary header
 
 ## Installation
 
-This is a [Node.js](https://nodejs.org/en/) module available through the
-[npm registry](https://www.npmjs.com/). Installation is done using the
-[`npm install` command](https://docs.npmjs.com/getting-started/installing-npm-packages-locally): 
-
 ```sh
 $ npm install vary
 ```
 
 ## API
-
-<!-- eslint-disable no-unused-vars -->
 
 ```js
 var vary = require('vary')
@@ -34,8 +28,6 @@ header, or an array of multiple fields.
 
 This will append the header if not already listed, otherwise leaves
 it listed in the current location.
-
-<!-- eslint-disable no-undef -->
 
 ```js
 // Append "Origin" to the Vary header of the response
@@ -51,8 +43,6 @@ or an array of multiple fields.
 This will append the header if not already listed, otherwise leaves
 it listed in the current location. The new header string is returned.
 
-<!-- eslint-disable no-undef -->
-
 ```js
 // Get header string appending "Origin" to "Accept, User-Agent"
 vary.append('Accept, User-Agent', 'Origin')
@@ -66,7 +56,7 @@ vary.append('Accept, User-Agent', 'Origin')
 var http = require('http')
 var vary = require('vary')
 
-http.createServer(function onRequest (req, res) {
+http.createServer(function onRequest(req, res) {
   // about to user-agent sniff
   vary(res, 'User-Agent')
 
@@ -92,7 +82,7 @@ $ npm test
 [npm-image]: https://img.shields.io/npm/v/vary.svg
 [npm-url]: https://npmjs.org/package/vary
 [node-version-image]: https://img.shields.io/node/v/vary.svg
-[node-version-url]: https://nodejs.org/en/download
+[node-version-url]: http://nodejs.org/download/
 [travis-image]: https://img.shields.io/travis/jshttp/vary/master.svg
 [travis-url]: https://travis-ci.org/jshttp/vary
 [coveralls-image]: https://img.shields.io/coveralls/jshttp/vary/master.svg

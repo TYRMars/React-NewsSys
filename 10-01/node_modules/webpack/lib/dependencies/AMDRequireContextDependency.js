@@ -2,28 +2,17 @@
 	MIT License http://www.opensource.org/licenses/mit-license.php
 	Author Tobias Koppers @sokra
 */
-"use strict";
+var ContextDependency = require("./ContextDependency");
 
-const ContextDependency = require("./ContextDependency");
-const CriticalDependencyWarning = require("./CriticalDependencyWarning");
-class AMDRequireContextDependency extends ContextDependency {
-	constructor(request, recursive, regExp, range, valueRange) {
-		super(request, recursive, regExp);
-		this.range = range;
-		this.valueRange = valueRange;
-	}
-
-	get type() {
-		return "amd require context";
-	}
-
-	getWarnings() {
-		if(this.critical) {
-			return [
-				new CriticalDependencyWarning(this.critical)
-			];
-		}
-	}
+function AMDRequireContextDependency(request, recursive, regExp, range, valueRange) {
+	ContextDependency.call(this, request, recursive, regExp);
+	this.range = range;
+	this.valueRange = valueRange;
 }
-AMDRequireContextDependency.Template = require("./ContextDependencyTemplateAsRequireCall");
 module.exports = AMDRequireContextDependency;
+
+AMDRequireContextDependency.prototype = Object.create(ContextDependency.prototype);
+AMDRequireContextDependency.prototype.constructor = AMDRequireContextDependency;
+AMDRequireContextDependency.prototype.type = "amd require context";
+
+AMDRequireContextDependency.Template = require("./ContextDependencyTemplateAsRequireCall");

@@ -2,21 +2,16 @@
 	MIT License http://www.opensource.org/licenses/mit-license.php
 	Author Tobias Koppers @sokra
 */
-"use strict";
+var fs = require("fs");
+var path = require("path");
+var mkdirp = require("mkdirp");
 
-const fs = require("fs");
-const path = require("path");
-const mkdirp = require("mkdirp");
-
-class NodeOutputFileSystem {
-	constructor() {
-		this.mkdirp = mkdirp;
-		this.mkdir = fs.mkdir.bind(fs);
-		this.rmdir = fs.rmdir.bind(fs);
-		this.unlink = fs.unlink.bind(fs);
-		this.writeFile = fs.writeFile.bind(fs);
-		this.join = path.join.bind(path);
-	}
-}
-
+function NodeOutputFileSystem() {}
 module.exports = NodeOutputFileSystem;
+
+NodeOutputFileSystem.prototype.mkdirp = mkdirp;
+NodeOutputFileSystem.prototype.mkdir = fs.mkdir.bind(this);
+NodeOutputFileSystem.prototype.rmdir = fs.rmdir.bind(this);
+NodeOutputFileSystem.prototype.unlink = fs.unlink.bind(this);
+NodeOutputFileSystem.prototype.writeFile = fs.writeFile.bind(fs);
+NodeOutputFileSystem.prototype.join = path.join.bind(path);

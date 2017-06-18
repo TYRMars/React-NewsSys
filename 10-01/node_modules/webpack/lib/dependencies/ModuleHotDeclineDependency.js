@@ -2,22 +2,17 @@
 	MIT License http://www.opensource.org/licenses/mit-license.php
 	Author Tobias Koppers @sokra
 */
-"use strict";
-const ModuleDependency = require("./ModuleDependency");
-const ModuleDependencyTemplateAsId = require("./ModuleDependencyTemplateAsId");
+var ModuleDependency = require("./ModuleDependency");
 
-class ModuleHotDeclineDependency extends ModuleDependency {
-	constructor(request, range) {
-		super(request);
-		this.range = range;
-		this.weak = true;
-	}
-
-	get type() {
-		return "module.hot.decline";
-	}
+function ModuleHotDeclineDependency(request, range) {
+	ModuleDependency.call(this, request);
+	this.range = range;
+	this.weak = true;
 }
-
-ModuleHotDeclineDependency.Template = ModuleDependencyTemplateAsId;
-
 module.exports = ModuleHotDeclineDependency;
+
+ModuleHotDeclineDependency.prototype = Object.create(ModuleDependency.prototype);
+ModuleHotDeclineDependency.prototype.constructor = ModuleHotDeclineDependency;
+ModuleHotDeclineDependency.prototype.type = "module.hot.decline";
+
+ModuleHotDeclineDependency.Template = require("./ModuleDependencyTemplateAsId");

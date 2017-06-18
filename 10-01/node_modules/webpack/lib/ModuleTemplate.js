@@ -2,22 +2,22 @@
 	MIT License http://www.opensource.org/licenses/mit-license.php
 	Author Tobias Koppers @sokra
 */
-"use strict";
+var Template = require("./Template");
 
-const Template = require("./Template");
+function ModuleTemplate(outputOptions) {
+	Template.call(this, outputOptions);
+}
+module.exports = ModuleTemplate;
 
-module.exports = class ModuleTemplate extends Template {
-	constructor(outputOptions) {
-		super(outputOptions);
-	}
-	render(module, dependencyTemplates, chunk) {
-		const moduleSource = module.source(dependencyTemplates, this.outputOptions, this.requestShortener);
-		const moduleSourcePostModule = this.applyPluginsWaterfall("module", moduleSource, module, chunk, dependencyTemplates);
-		const moduleSourcePostRender = this.applyPluginsWaterfall("render", moduleSourcePostModule, module, chunk, dependencyTemplates);
-		return this.applyPluginsWaterfall("package", moduleSourcePostRender, module, chunk, dependencyTemplates);
-	}
-	updateHash(hash) {
-		hash.update("1");
-		this.applyPlugins("hash", hash);
-	}
+ModuleTemplate.prototype = Object.create(Template.prototype);
+ModuleTemplate.prototype.render = function(module, dependencyTemplates, chunk) {
+	var moduleSource = module.source(dependencyTemplates, this.outputOptions, this.requestShortener);
+	moduleSource = this.applyPluginsWaterfall("module", moduleSource, module, chunk, dependencyTemplates);
+	moduleSource = this.applyPluginsWaterfall("render", moduleSource, module, chunk, dependencyTemplates);
+	return this.applyPluginsWaterfall("package", moduleSource, module, chunk, dependencyTemplates);
+};
+
+ModuleTemplate.prototype.updateHash = function(hash) {
+	hash.update("1");
+	this.applyPlugins("hash", hash);
 };

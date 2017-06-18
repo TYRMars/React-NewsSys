@@ -16,11 +16,11 @@ NodeMainTemplatePlugin.prototype.apply = function(mainTemplate) {
 				source,
 				"",
 				"// object to store loaded chunks",
-				"// \"0\" means \"already loaded\"",
+				"// \"1\" means \"already loaded\"",
 				"var installedChunks = {",
 				this.indent(
 					chunk.ids.map(function(id) {
-						return id + ": 0";
+						return id + ":1";
 					}).join(",\n")
 				),
 				"};"
@@ -28,25 +28,9 @@ NodeMainTemplatePlugin.prototype.apply = function(mainTemplate) {
 		}
 		return source;
 	});
-	mainTemplate.plugin("require-extensions", function(source, chunk) {
-		if(chunk.chunks.length > 0) {
-			return this.asString([
-				source,
-				"",
-				"// uncatched error handler for webpack runtime",
-				this.requireFn + ".oe = function(err) {",
-				this.indent([
-					"process.nextTick(function() {",
-					this.indent("throw err; // catch this error by using System.import().catch()"),
-					"});"
-				]),
-				"};"
-			]);
-		}
-		return source;
-	});
 	mainTemplate.plugin("require-ensure", function(_, chunk, hash) {
-		var chunkFilename = this.outputOptions.chunkFilename;
+		var filename = this.outputOptions.filename || "bundle.js";
+		var chunkFilename = this.outputOptions.chunkFilename || "[id]." + filename;
 		var chunkMaps = chunk.getChunkMaps();
 		var insertMoreModules = [
 			"var moreModules = chunk.modules, chunkIds = chunk.ids;",
@@ -56,20 +40,10 @@ NodeMainTemplatePlugin.prototype.apply = function(mainTemplate) {
 		];
 		if(self.asyncChunkLoading) {
 			return this.asString([
-				"// \"0\" is the signal for \"already loaded\"",
-				"if(installedChunks[chunkId] === 0)",
+				"if(installedChunks[chunkId] === 1) callback.call(null, " + this.requireFn + ");",
+				"else if(!installedChunks[chunkId]) {",
 				this.indent([
-					"return Promise.resolve();"
-				]),
-				"// array of [resolve, reject, promise] means \"currently loading\"",
-				"if(installedChunks[chunkId])",
-				this.indent([
-					"return installedChunks[chunkId][2];"
-				]),
-				"// load the chunk and return promise to it",
-				"var promise = new Promise(function(resolve, reject) {",
-				this.indent([
-					"installedChunks[chunkId] = [resolve, reject];",
+					"installedChunks[chunkId] = [callback];",
 					"var filename = __dirname + " + this.applyPluginsWaterfall("asset-path", JSON.stringify("/" + chunkFilename), {
 						hash: "\" + " + this.renderCurrentHashCode(hash) + " + \"",
 						hashWithLength: function(length) {
@@ -91,7 +65,7 @@ NodeMainTemplatePlugin.prototype.apply = function(mainTemplate) {
 					}) + ";",
 					"require('fs').readFile(filename, 'utf-8',  function(err, content) {",
 					this.indent([
-						"if(err) return reject(err);",
+						"if(err) { if(" + this.requireFn + ".onError) return " + this.requireFn + ".onError(err); else throw err; }",
 						"var chunk = {};",
 						"require('vm').runInThisContext('(function(exports, require, __dirname, __filename) {' + content + '\\n})', filename)" +
 						"(chunk, require, require('path').dirname(filename), filename);"
@@ -99,20 +73,19 @@ NodeMainTemplatePlugin.prototype.apply = function(mainTemplate) {
 						"var callbacks = [];",
 						"for(var i = 0; i < chunkIds.length; i++) {",
 						this.indent([
-							"if(installedChunks[chunkIds[i]])",
+							"if(Array.isArray(installedChunks[chunkIds[i]]))",
 							this.indent([
-								"callbacks = callbacks.concat(installedChunks[chunkIds[i]][0]);"
+								"callbacks = callbacks.concat(installedChunks[chunkIds[i]]);"
 							]),
-							"installedChunks[chunkIds[i]] = 0;"
+							"installedChunks[chunkIds[i]] = 1;"
 						]),
 						"}",
 						"for(i = 0; i < callbacks.length; i++)",
-						this.indent("callbacks[i]();")
+						this.indent("callbacks[i].call(null, " + this.requireFn + ");")
 					])),
 					"});"
 				]),
-				"});",
-				"return installedChunks[chunkId][2] = promise;"
+				"} else installedChunks[chunkId].push(callback);"
 			]);
 		} else {
 			var request = this.applyPluginsWaterfall("asset-path", JSON.stringify("./" + chunkFilename), {
@@ -135,16 +108,16 @@ NodeMainTemplatePlugin.prototype.apply = function(mainTemplate) {
 				}
 			});
 			return this.asString([
-				"// \"0\" is the signal for \"already loaded\"",
-				"if(installedChunks[chunkId] !== 0) {",
+				"// \"1\" is the signal for \"already loaded\"",
+				"if(!installedChunks[chunkId]) {",
 				this.indent([
 					"var chunk = require(" + request + ");"
 				].concat(insertMoreModules).concat([
 					"for(var i = 0; i < chunkIds.length; i++)",
-					this.indent("installedChunks[chunkIds[i]] = 0;")
+					this.indent("installedChunks[chunkIds[i]] = 1;")
 				])),
 				"}",
-				"return Promise.resolve();"
+				"callback.call(null, " + this.requireFn + ");"
 			]);
 		}
 	});

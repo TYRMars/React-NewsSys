@@ -2,32 +2,24 @@
 	MIT License http://www.opensource.org/licenses/mit-license.php
 	Author Tobias Koppers @sokra
 */
-"use strict";
-const ModuleDependency = require("./ModuleDependency");
+var ModuleDependency = require("./ModuleDependency");
 
-class RequireIncludeDependency extends ModuleDependency {
-	constructor(request, range) {
-		super(request);
-		this.range = range;
-	}
-
-	get type() {
-		return "require.include";
-	}
+function RequireIncludeDependency(request, range) {
+	ModuleDependency.call(this, request);
+	this.range = range;
 }
-
-RequireIncludeDependency.Template = class RequireIncludeDependencyTemplate {
-	apply(dep, source, outputOptions, requestShortener) {
-		const comment = this.getOptionalComment(outputOptions.pathinfo && dep.module, requestShortener.shorten(dep.request));
-		source.replace(dep.range[0], dep.range[1] - 1, `undefined${comment}`);
-	}
-
-	getOptionalComment(shouldHaveComment, shortenedRequest) {
-		if(shouldHaveComment) {
-			return "";
-		}
-		return `/*! require.include ${shortenedRequest} */`;
-	}
-};
-
 module.exports = RequireIncludeDependency;
+
+RequireIncludeDependency.prototype = Object.create(ModuleDependency.prototype);
+RequireIncludeDependency.prototype.constructor = RequireIncludeDependency;
+RequireIncludeDependency.prototype.type = "require.include";
+
+RequireIncludeDependency.Template = function RequireIncludeDependencyTemplate() {};
+
+RequireIncludeDependency.Template.prototype.apply = function(dep, source, outputOptions, requestShortener) {
+	var comment = "";
+	if(outputOptions.pathinfo && dep.module)
+		comment = "/*! require.include " + requestShortener.shorten(dep.request) + " */";
+	source.replace(dep.range[0], dep.range[1] - 1,
+		"undefined" + comment);
+};

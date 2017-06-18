@@ -146,9 +146,8 @@ var getTrackLeft = exports.getTrackLeft = function getTrackLeft(spec) {
         targetSlide = _reactDom2.default.findDOMNode(spec.trackRef).children[spec.slideIndex + spec.slidesToShow + 1];
       }
 
-      if (targetSlide) {
-        targetLeft = targetSlide.offsetLeft * -1 + (spec.listWidth - targetSlide.offsetWidth) / 2;
-      }
+      targetLeft = targetSlide ? targetSlide.offsetLeft * -1 : 0;
+      targetLeft += (spec.listWidth - targetSlide.offsetWidth) / 2;
     }
   }
 

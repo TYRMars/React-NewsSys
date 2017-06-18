@@ -2,21 +2,16 @@
 	MIT License http://www.opensource.org/licenses/mit-license.php
 	Author Tobias Koppers @sokra
 */
-"use strict";
-const ModuleDependency = require("./ModuleDependency");
-const ModuleDependencyTemplateAsId = require("./ModuleDependencyTemplateAsId");
+var ModuleDependency = require("./ModuleDependency");
 
-class CommonJsRequireDependency extends ModuleDependency {
-	constructor(request, range) {
-		super(request);
-		this.range = range;
-	}
-
-	get type() {
-		return "cjs require";
-	}
+function CommonJsRequireDependency(request, range) {
+	ModuleDependency.call(this, request);
+	this.range = range;
 }
-
-CommonJsRequireDependency.Template = ModuleDependencyTemplateAsId;
-
 module.exports = CommonJsRequireDependency;
+
+CommonJsRequireDependency.prototype = Object.create(ModuleDependency.prototype);
+CommonJsRequireDependency.prototype.constructor = CommonJsRequireDependency;
+CommonJsRequireDependency.prototype.type = "cjs require";
+
+CommonJsRequireDependency.Template = require("./ModuleDependencyTemplateAsId");

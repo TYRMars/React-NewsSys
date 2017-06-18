@@ -41,16 +41,8 @@ function createApplication() {
   mixin(app, EventEmitter.prototype, false);
   mixin(app, proto, false);
 
-  // expose the prototype that will get set on requests
-  app.request = Object.create(req, {
-    app: { configurable: true, enumerable: true, writable: true, value: app }
-  })
-
-  // expose the prototype that will get set on responses
-  app.response = Object.create(res, {
-    app: { configurable: true, enumerable: true, writable: true, value: app }
-  })
-
+  app.request = { __proto__: req, app: app };
+  app.response = { __proto__: res, app: app };
   app.init();
   return app;
 }

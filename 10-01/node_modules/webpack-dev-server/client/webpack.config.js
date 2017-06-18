@@ -1,19 +1,11 @@
 module.exports = {
 	module: {
-		rules: [
-			{
-				test: /\.pug$/,
-				use: [
-					"pug-loader?self",
-				]
-			},
-			{
-				test: /\.css$/,
-				use: [
-					"style-loader",
-					"css-loader"
-				],
-			}
+		loaders: [
+			{ test: /\.css$/, loader: "style!css" },
+			{ test: /\.jade$/, loader: "jade?self" }
 		]
+	},
+	node: {
+		fs: "empty"
 	}
-};
+}

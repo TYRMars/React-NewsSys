@@ -2,30 +2,37 @@
 	MIT License http://www.opensource.org/licenses/mit-license.php
 	Author Tobias Koppers @sokra
 */
-"use strict";
+var ConstDependency = require("./dependencies/ConstDependency");
 
-const ParserHelpers = require("./ParserHelpers");
-const ConstDependency = require("./dependencies/ConstDependency");
-const NullFactory = require("./NullFactory");
+var NullFactory = require("./NullFactory");
 
-module.exports = class RequireJsStuffPlugin {
+function RequireJsStuffPlugin() {}
+module.exports = RequireJsStuffPlugin;
+RequireJsStuffPlugin.prototype.apply = function(compiler) {
+	compiler.plugin("compilation", function(compilation) {
+		compilation.dependencyFactories.set(ConstDependency, new NullFactory());
+		compilation.dependencyTemplates.set(ConstDependency, new ConstDependency.Template());
+	});
 
-	apply(compiler) {
-		compiler.plugin("compilation", function(compilation, params) {
-			compilation.dependencyFactories.set(ConstDependency, new NullFactory());
-			compilation.dependencyTemplates.set(ConstDependency, new ConstDependency.Template());
-			params.normalModuleFactory.plugin("parser", function(parser, parserOptions) {
-
-				if(typeof parserOptions.requireJs !== "undefined" && !parserOptions.requireJs)
-					return;
-
-				parser.plugin("call require.config", ParserHelpers.toConstantDependency("undefined"));
-				parser.plugin("call requirejs.config", ParserHelpers.toConstantDependency("undefined"));
-
-				parser.plugin("expression require.version", ParserHelpers.toConstantDependency(JSON.stringify("0.0.0")));
-				parser.plugin("expression requirejs.onError", ParserHelpers.toConstantDependency(JSON.stringify("__webpack_require__.oe")));
-			});
-		});
+	function remove(expr) {
+		var dep = new ConstDependency(";", expr.range);
+		dep.loc = expr.loc;
+		this.state.current.addDependency(dep);
+		return true;
 	}
+	compiler.parser.plugin("call require.config", remove);
+	compiler.parser.plugin("call requirejs.config", remove);
 
+	compiler.parser.plugin("expression require.version", function(expr) {
+		var dep = new ConstDependency(JSON.stringify("0.0.0"), expr.range);
+		dep.loc = expr.loc;
+		this.state.current.addDependency(dep);
+		return true;
+	});
+	compiler.parser.plugin("expression requirejs.onError", function(expr) {
+		var dep = new ConstDependency(JSON.stringify("__webpack_require__.onError"), expr.range);
+		dep.loc = expr.loc;
+		this.state.current.addDependency(dep);
+		return true;
+	});
 };

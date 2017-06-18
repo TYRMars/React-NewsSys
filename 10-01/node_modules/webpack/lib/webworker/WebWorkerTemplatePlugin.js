@@ -2,19 +2,14 @@
 	MIT License http://www.opensource.org/licenses/mit-license.php
 	Author Tobias Koppers @sokra
 */
-"use strict";
+var WebWorkerMainTemplatePlugin = require("./WebWorkerMainTemplatePlugin");
+var WebWorkerChunkTemplatePlugin = require("./WebWorkerChunkTemplatePlugin");
 
-const WebWorkerMainTemplatePlugin = require("./WebWorkerMainTemplatePlugin");
-const WebWorkerChunkTemplatePlugin = require("./WebWorkerChunkTemplatePlugin");
-const WebWorkerHotUpdateChunkTemplatePlugin = require("./WebWorkerHotUpdateChunkTemplatePlugin");
-
-class WebWorkerTemplatePlugin {
-	apply(compiler) {
-		compiler.plugin("this-compilation", compilation => {
-			compilation.mainTemplate.apply(new WebWorkerMainTemplatePlugin());
-			compilation.chunkTemplate.apply(new WebWorkerChunkTemplatePlugin());
-			compilation.hotUpdateChunkTemplate.apply(new WebWorkerHotUpdateChunkTemplatePlugin());
-		});
-	}
-}
+function WebWorkerTemplatePlugin() {}
 module.exports = WebWorkerTemplatePlugin;
+WebWorkerTemplatePlugin.prototype.apply = function(compiler) {
+	compiler.plugin("this-compilation", function(compilation) {
+		compilation.mainTemplate.apply(new WebWorkerMainTemplatePlugin());
+		compilation.chunkTemplate.apply(new WebWorkerChunkTemplatePlugin());
+	});
+};

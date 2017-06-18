@@ -9,7 +9,7 @@ function Storage(duration) {
 	this.levels = [];
 	if(duration > 0) {
 		this.levels.push([], [], [], [], [], [], [], [], []);
-		for(var i = 8000; i < duration; i += 500)
+		for(var i = 8000; i < duration; i+=500)
 			this.levels.push([]);
 	}
 	this.count = 0;
@@ -17,34 +17,25 @@ function Storage(duration) {
 	this.needTickCheck = false;
 	this.nextTick = null;
 	this.passive = true;
-	this.tick = this.tick.bind(this);
 }
 
 Storage.prototype.ensureTick = function() {
 	if(!this.interval && this.duration > 0 && !this.nextTick)
-		this.interval = setInterval(this.tick, Math.floor(this.duration / this.levels.length));
+		this.interval = setInterval(this.tick.bind(this), Math.floor(this.duration / this.levels.length));
 };
 
-Storage.prototype.finished = function(name, err, result) {
+Storage.prototype.finished = function(name) {
+	var args = Array.prototype.slice.call(arguments, 1);
 	var callbacks = this.running[name];
 	delete this.running[name];
 	if(this.duration > 0) {
 		this.count++;
-		this.data[name] = [err, result];
+		this.data[name] = args;
 		this.levels[0].push(name);
 		this.ensureTick();
 	}
 	for(var i = 0; i < callbacks.length; i++) {
-		callbacks[i](err, result);
-	}
-};
-
-Storage.prototype.finishedSync = function(name, err, result) {
-	if(this.duration > 0) {
-		this.count++;
-		this.data[name] = [err, result];
-		this.levels[0].push(name);
-		this.ensureTick();
+		callbacks[i].apply(null, args);
 	}
 };
 
@@ -58,36 +49,11 @@ Storage.prototype.provide = function(name, provider, callback) {
 		this.checkTicks();
 		var data = this.data[name];
 		if(data) {
-			return process.nextTick(function() {
-				callback.apply(null, data);
-			});
+			return callback.apply(null, data);
 		}
 	}
 	this.running[name] = running = [callback];
-	var _this = this;
-	provider(name, function(err, result) {
-		_this.finished(name, err, result);
-	});
-};
-
-Storage.prototype.provideSync = function(name, provider) {
-	if(this.duration > 0) {
-		this.checkTicks();
-		var data = this.data[name];
-		if(data) {
-			if(data[0])
-				throw data[0];
-			return data[1];
-		}
-	}
-	try {
-		var result = provider(name);
-	} catch(e) {
-		this.finishedSync(name, e);
-		throw e;
-	}
-	this.finishedSync(name, null, result);
-	return result;
+	provider(name, this.finished.bind(this, name));
 };
 
 Storage.prototype.tick = function() {
@@ -98,7 +64,7 @@ Storage.prototype.tick = function() {
 	this.count -= decay.length;
 	decay.length = 0;
 	this.levels.unshift(decay);
-	if(this.count === 0) {
+	if(this.count == 0) {
 		clearInterval(this.interval);
 		this.interval = null;
 		this.nextTick = null;
@@ -108,7 +74,7 @@ Storage.prototype.tick = function() {
 		var time = new Date().getTime();
 		if(this.nextTick > time) {
 			this.nextTick = null;
-			this.interval = setInterval(this.tick, Math.floor(this.duration / this.levels.length));
+			this.interval = setInterval(this.tick.bind(this), Math.floor(this.duration / this.levels.length));
 			return true;
 		}
 	} else if(this.passive) {
@@ -148,107 +114,34 @@ Storage.prototype.purge = function(what) {
 	}
 };
 
+
 function CachedInputFileSystem(fileSystem, duration) {
 	this.fileSystem = fileSystem;
 	this._statStorage = new Storage(duration);
 	this._readdirStorage = new Storage(duration);
 	this._readFileStorage = new Storage(duration);
-	this._readJsonStorage = new Storage(duration);
 	this._readlinkStorage = new Storage(duration);
-
-	this._stat = this.fileSystem.stat ? this.fileSystem.stat.bind(this.fileSystem) : null;
-	if(!this._stat) this.stat = null;
-
-	this._statSync = this.fileSystem.statSync ? this.fileSystem.statSync.bind(this.fileSystem) : null;
-	if(!this._statSync) this.statSync = null;
-
-	this._readdir = this.fileSystem.readdir ? this.fileSystem.readdir.bind(this.fileSystem) : null;
-	if(!this._readdir) this.readdir = null;
-
-	this._readdirSync = this.fileSystem.readdirSync ? this.fileSystem.readdirSync.bind(this.fileSystem) : null;
-	if(!this._readdirSync) this.readdirSync = null;
-
-	this._readFile = this.fileSystem.readFile ? this.fileSystem.readFile.bind(this.fileSystem) : null;
-	if(!this._readFile) this.readFile = null;
-
-	this._readFileSync = this.fileSystem.readFileSync ? this.fileSystem.readFileSync.bind(this.fileSystem) : null;
-	if(!this._readFileSync) this.readFileSync = null;
-
-	if(this.fileSystem.readJson) {
-		this._readJson = this.fileSystem.readJson.bind(this.fileSystem);
-	} else if(this.readFile) {
-		this._readJson = function(path, callback) {
-			this.readFile(path, function(err, buffer) {
-				if(err) return callback(err);
-				try {
-					var data = JSON.parse(buffer.toString("utf-8"));
-				} catch(e) {
-					return callback(e);
-				}
-				callback(null, data);
-			});
-		}.bind(this);
-	} else {
-		this.readJson = null;
-	}
-	if(this.fileSystem.readJsonSync) {
-		this._readJsonSync = this.fileSystem.readJsonSync.bind(this.fileSystem);
-	} else if(this.readFileSync) {
-		this._readJsonSync = function(path) {
-			var buffer = this.readFileSync(path);
-			var data = JSON.parse(buffer.toString("utf-8"));
-			return data;
-		}.bind(this);
-	} else {
-		this.readJsonSync = null;
-	}
-
-	this._readlink = this.fileSystem.readlink ? this.fileSystem.readlink.bind(this.fileSystem) : null;
-	if(!this._readlink) this.readlink = null;
-
-	this._readlinkSync = this.fileSystem.readlinkSync ? this.fileSystem.readlinkSync.bind(this.fileSystem) : null;
-	if(!this._readlinkSync) this.readlinkSync = null;
 }
 module.exports = CachedInputFileSystem;
 
+CachedInputFileSystem.prototype.isSync = function() {
+	return this.fileSystem.isSync();
+};
+
 CachedInputFileSystem.prototype.stat = function(path, callback) {
-	this._statStorage.provide(path, this._stat, callback);
+	this._statStorage.provide(path, this.fileSystem.stat.bind(this.fileSystem), callback);
 };
 
 CachedInputFileSystem.prototype.readdir = function(path, callback) {
-	this._readdirStorage.provide(path, this._readdir, callback);
+	this._readdirStorage.provide(path, this.fileSystem.readdir.bind(this.fileSystem), callback);
 };
 
 CachedInputFileSystem.prototype.readFile = function(path, callback) {
-	this._readFileStorage.provide(path, this._readFile, callback);
-};
-
-CachedInputFileSystem.prototype.readJson = function(path, callback) {
-	this._readJsonStorage.provide(path, this._readJson, callback);
+	this._readFileStorage.provide(path, this.fileSystem.readFile.bind(this.fileSystem), callback);
 };
 
 CachedInputFileSystem.prototype.readlink = function(path, callback) {
-	this._readlinkStorage.provide(path, this._readlink, callback);
-};
-
-CachedInputFileSystem.prototype.statSync = function(path) {
-	return this._statStorage.provideSync(path, this._statSync);
-};
-
-CachedInputFileSystem.prototype.readdirSync = function(path) {
-	return this._readdirStorage.provideSync(path, this._readdirSync);
-};
-
-CachedInputFileSystem.prototype.readFileSync = function(path) {
-	return this._readFileStorage.provideSync(path, this._readFileSync);
-};
-
-CachedInputFileSystem.prototype.readJsonSync = function(path) {
-	return this._readJsonStorage.provideSync(path, this._readJsonSync);
-};
-
-CachedInputFileSystem.prototype.readlinkSync = function(path) {
-	return this._readlinkStorage.provideSync(path, this._readlinkSync);
+	this._readlinkStorage.provide(path, this.fileSystem.readlink.bind(this.fileSystem), callback);
 };
 
 CachedInputFileSystem.prototype.purge = function(what) {
@@ -256,5 +149,4 @@ CachedInputFileSystem.prototype.purge = function(what) {
 	this._readdirStorage.purge(what);
 	this._readFileStorage.purge(what);
 	this._readlinkStorage.purge(what);
-	this._readJsonStorage.purge(what);
 };

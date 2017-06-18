@@ -2,29 +2,27 @@
 	MIT License http://www.opensource.org/licenses/mit-license.php
 	Author Tobias Koppers @sokra
 */
-"use strict";
+var Template = require("./Template");
 
-const Template = require("./Template");
+function HotUpdateChunkTemplate(outputOptions) {
+	Template.call(this, outputOptions);
+}
 
-module.exports = class HotUpdateChunkTemplate extends Template {
-	constructor(outputOptions) {
-		super(outputOptions);
-	}
+module.exports = HotUpdateChunkTemplate;
 
-	render(id, modules, removedModules, hash, moduleTemplate, dependencyTemplates) {
-		const modulesSource = this.renderChunkModules({
-			id: id,
-			modules: modules,
-			removedModules: removedModules
-		}, moduleTemplate, dependencyTemplates);
-		const core = this.applyPluginsWaterfall("modules", modulesSource, modules, removedModules, moduleTemplate, dependencyTemplates);
-		const source = this.applyPluginsWaterfall("render", core, modules, removedModules, hash, id, moduleTemplate, dependencyTemplates);
-		return source;
-	}
+HotUpdateChunkTemplate.prototype = Object.create(Template.prototype);
+HotUpdateChunkTemplate.prototype.render = function(id, modules, hash, moduleTemplate, dependencyTemplates) {
+	var modulesSource = this.renderChunkModules({
+		id: id,
+		modules: modules
+	}, moduleTemplate, dependencyTemplates);
+	var core = this.applyPluginsWaterfall("modules", modulesSource, modules, moduleTemplate, dependencyTemplates);
+	var source = this.applyPluginsWaterfall("render", core, modules, hash, id, moduleTemplate, dependencyTemplates);
+	return source;
+};
 
-	updateHash(hash) {
-		hash.update("HotUpdateChunkTemplate");
-		hash.update("1");
-		this.applyPlugins("hash", hash);
-	}
+HotUpdateChunkTemplate.prototype.updateHash = function(hash) {
+	hash.update("HotUpdateChunkTemplate");
+	hash.update("1");
+	this.applyPlugins("hash", hash);
 };

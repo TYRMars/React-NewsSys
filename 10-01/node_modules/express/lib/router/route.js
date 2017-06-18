@@ -44,7 +44,7 @@ function Route(path) {
   this.path = path;
   this.stack = [];
 
-  debug('new %o', path)
+  debug('new %s', path);
 
   // route handlers for various http methods
   this.methods = {};
@@ -112,14 +112,8 @@ Route.prototype.dispatch = function dispatch(req, res, done) {
   next();
 
   function next(err) {
-    // signal to exit route
     if (err && err === 'route') {
       return done();
-    }
-
-    // signal to exit router
-    if (err && err === 'router') {
-      return done(err)
     }
 
     var layer = stack[idx++];
@@ -202,7 +196,7 @@ methods.forEach(function(method){
         throw new Error(msg);
       }
 
-      debug('%s %o', method, this.path)
+      debug('%s %s', method, this.path);
 
       var layer = Layer('/', {}, handle);
       layer.method = method;

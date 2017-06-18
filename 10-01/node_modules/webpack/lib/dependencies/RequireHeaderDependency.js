@@ -2,25 +2,24 @@
 	MIT License http://www.opensource.org/licenses/mit-license.php
 	Author Tobias Koppers @sokra
 */
-"use strict";
-const NullDependency = require("./NullDependency");
+var NullDependency = require("./NullDependency");
 
-class RequireHeaderDependency extends NullDependency {
-	constructor(range) {
-		super();
-		if(!Array.isArray(range)) throw new Error("range must be valid");
-		this.range = range;
-	}
+function RequireHeaderDependency(range) {
+	if(!Array.isArray(range)) throw new Error("range must be valid");
+	NullDependency.call(this);
+	this.range = range;
 }
+module.exports = RequireHeaderDependency;
 
-RequireHeaderDependency.Template = class RequireHeaderDependencyTemplate {
-	apply(dep, source) {
-		source.replace(dep.range[0], dep.range[1] - 1, "__webpack_require__");
-	}
+RequireHeaderDependency.prototype = Object.create(NullDependency.prototype);
+RequireHeaderDependency.prototype.constructor = RequireHeaderDependency;
 
-	applyAsTemplateArgument(name, dep, source) {
-		source.replace(dep.range[0], dep.range[1] - 1, "require");
-	}
+RequireHeaderDependency.Template = function RequireHeaderDependencyTemplate() {};
+
+RequireHeaderDependency.Template.prototype.apply = function(dep, source) {
+	source.replace(dep.range[0], dep.range[1] - 1, "__webpack_require__");
 };
 
-module.exports = RequireHeaderDependency;
+RequireHeaderDependency.Template.prototype.applyAsTemplateArgument = function(name, dep, source) {
+	source.replace(dep.range[0], dep.range[1] - 1, "require");
+};

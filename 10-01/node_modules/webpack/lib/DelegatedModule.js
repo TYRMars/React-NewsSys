@@ -2,85 +2,68 @@
 	MIT License http://www.opensource.org/licenses/mit-license.php
 	Author Tobias Koppers @sokra
 */
-"use strict";
+var Module = require("./Module");
+var OriginalSource = require("webpack-core/lib/OriginalSource");
+var RawSource = require("webpack-core/lib/RawSource");
+var WebpackMissingModule = require("./dependencies/WebpackMissingModule");
+var DelegatedSourceDependency = require("./dependencies/DelegatedSourceDependency");
 
-const Module = require("./Module");
-const OriginalSource = require("webpack-sources").OriginalSource;
-const RawSource = require("webpack-sources").RawSource;
-const WebpackMissingModule = require("./dependencies/WebpackMissingModule");
-const DelegatedSourceDependency = require("./dependencies/DelegatedSourceDependency");
-
-class DelegatedModule extends Module {
-	constructor(sourceRequest, data, type, userRequest) {
-		super();
-		this.sourceRequest = sourceRequest;
-		this.request = data.id;
-		this.meta = data.meta;
-		this.type = type;
-		this.userRequest = userRequest;
-		this.built = false;
-		this.delegated = true;
-		this.delegateData = data;
-	}
-
-	identifier() {
-		return `delegated ${JSON.stringify(this.request)} from ${this.sourceRequest}`;
-	}
-
-	readableIdentifier() {
-		return `delegated ${this.userRequest} from ${this.sourceRequest}`;
-	}
-
-	needRebuild() {
-		return false;
-	}
-
-	build(options, compilation, resolver, fs, callback) {
-		this.built = true;
-		this.builtTime = Date.now();
-		this.usedExports = true;
-		this.providedExports = this.delegateData.exports || true;
-		this.dependencies.length = 0;
-		this.addDependency(new DelegatedSourceDependency(this.sourceRequest));
-		callback();
-	}
-
-	unbuild() {
-		this.built = false;
-		super.unbuild();
-	}
-
-	source() {
-		const sourceModule = this.dependencies[0].module;
-		let str;
-
-		if(!sourceModule) {
-			str = WebpackMissingModule.moduleCode(this.sourceRequest);
-		} else {
-			str = `module.exports = (__webpack_require__(${sourceModule.id}))`;
-
-			switch(this.type) {
-				case "require":
-					str += `(${JSON.stringify(this.request)})`;
-					break;
-				case "object":
-					str += `[${JSON.stringify(this.request)}]`;
-					break;
-			}
-
-			str += ";";
-		}
-
-		if(this.useSourceMap) {
-			return new OriginalSource(str, this.identifier());
-		} else {
-			return new RawSource(str);
-		}
-	}
-
-	size() {
-		return 42;
-	}
+function DelegatedModule(sourceRequest, request, type, userRequest) {
+	Module.call(this);
+	this.sourceRequest = sourceRequest;
+	this.request = request;
+	this.type = type;
+	this.userRequest = userRequest;
+	this.built = false;
 }
-
 module.exports = DelegatedModule;
+
+DelegatedModule.prototype = Object.create(Module.prototype);
+
+DelegatedModule.prototype.delegated = true;
+
+DelegatedModule.prototype.identifier = function() {
+	return "delegated " + JSON.stringify(this.request) + " from " + this.sourceRequest;
+};
+
+DelegatedModule.prototype.readableIdentifier = function() {
+	return "delegated " + this.userRequest + " from " + this.sourceRequest;
+};
+
+DelegatedModule.prototype.needRebuild = function() {
+	return false;
+};
+
+DelegatedModule.prototype.build = function(options, compilation, resolver, fs, callback) {
+	this.builtTime = new Date().getTime();
+	this.dependencies.length = 0;
+	this.addDependency(new DelegatedSourceDependency(this.sourceRequest));
+	callback();
+};
+
+DelegatedModule.prototype.source = function() {
+	var sourceModule = this.dependencies[0].module;
+	var str;
+	if(!sourceModule) {
+		str = WebpackMissingModule.moduleCode(this.sourceRequest);
+	} else {
+		str = "module.exports = (__webpack_require__(" + sourceModule.id + "))";
+		switch(this.type) {
+			case "require":
+				str += "(" + JSON.stringify(this.request) + ");";
+				break;
+			case "object":
+				str += "[" + JSON.stringify(this.request) + "];";
+				break;
+		}
+	}
+	if(this.useSourceMap) {
+		return new OriginalSource(str, this.identifier());
+	} else {
+		return new RawSource(str);
+	}
+};
+
+DelegatedModule.prototype.size = function() {
+	return 42;
+};

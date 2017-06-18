@@ -2,21 +2,20 @@
 	MIT License http://www.opensource.org/licenses/mit-license.php
 	Author Tobias Koppers @sokra
 */
-"use strict";
+var ExternalModule = require("./ExternalModule");
 
-const ExternalModule = require("./ExternalModule");
+function ExternalModuleFactoryPlugin(type, externals) {
+	this.type = type;
+	this.externals = externals;
+}
+module.exports = ExternalModuleFactoryPlugin;
 
-class ExternalModuleFactoryPlugin {
-	constructor(type, externals) {
-		this.type = type;
-		this.externals = externals;
-	}
-
-	apply(normalModuleFactory) {
-		const globalType = this.type;
-		normalModuleFactory.plugin("factory", factory => (data, callback) => {
-			const context = data.context;
-			const dependency = data.dependencies[0];
+ExternalModuleFactoryPlugin.prototype.apply = function(normalModuleFactory) {
+	var globalType = this.type;
+	normalModuleFactory.plugin("factory", function(factory) {
+		return function(data, callback) {
+			var context = data.context;
+			var dependency = data.dependency;
 
 			function handleExternal(value, type, callback) {
 				if(typeof type === "function") {
@@ -26,7 +25,7 @@ class ExternalModuleFactoryPlugin {
 				if(value === false) return factory(data, callback);
 				if(value === true) value = dependency.request;
 				if(typeof type === "undefined" && /^[a-z0-9]+ /.test(value)) {
-					const idx = value.indexOf(" ");
+					var idx = value.indexOf(" ");
 					type = value.substr(0, idx);
 					value = value.substr(idx + 1);
 				}
@@ -39,27 +38,24 @@ class ExternalModuleFactoryPlugin {
 						return handleExternal(dependency.request, callback);
 					}
 				} else if(Array.isArray(externals)) {
-					let i = 0;
+					var i = 0;
 					(function next() {
-						let asyncFlag;
-						const handleExternalsAndCallback = function handleExternalsAndCallback(err, module) {
-							if(err) return callback(err);
-							if(!module) {
-								if(asyncFlag) {
-									asyncFlag = false;
-									return;
-								}
-								return next();
-							}
-							callback(null, module);
-						};
-
 						do {
-							asyncFlag = true;
+							var async = true;
 							if(i >= externals.length) return callback();
-							handleExternals(externals[i++], handleExternalsAndCallback);
-						} while (!asyncFlag); // eslint-disable-line keyword-spacing
-						asyncFlag = false;
+							handleExternals(externals[i++], function(err, module) {
+								if(err) return callback(err);
+								if(!module) {
+									if(async) {
+										async = false;
+										return;
+									}
+									return next();
+								}
+								callback(null, module);
+							});
+						} while (!async);
+						async = false;
 					}());
 					return;
 				} else if(externals instanceof RegExp) {
@@ -85,7 +81,6 @@ class ExternalModuleFactoryPlugin {
 				if(!module) return handleExternal(false, callback);
 				return callback(null, module);
 			}));
-		});
-	}
-}
-module.exports = ExternalModuleFactoryPlugin;
+		}.bind(this);
+	}.bind(this));
+};

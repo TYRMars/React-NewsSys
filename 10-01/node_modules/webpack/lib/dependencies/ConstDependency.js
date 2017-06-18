@@ -2,31 +2,28 @@
 	MIT License http://www.opensource.org/licenses/mit-license.php
 	Author Tobias Koppers @sokra
 */
-"use strict";
-const NullDependency = require("./NullDependency");
+var NullDependency = require("./NullDependency");
 
-class ConstDependency extends NullDependency {
-	constructor(expression, range) {
-		super();
-		this.expression = expression;
-		this.range = range;
-	}
-
-	updateHash(hash) {
-		hash.update(this.range + "");
-		hash.update(this.expression + "");
-	}
+function ConstDependency(expression, range) {
+	NullDependency.call(this);
+	this.expression = expression;
+	this.range = range;
 }
+module.exports = ConstDependency;
 
-ConstDependency.Template = class ConstDependencyTemplate {
-	apply(dep, source) {
-		if(typeof dep.range === "number") {
-			source.insert(dep.range, dep.expression);
-			return;
-		}
+ConstDependency.prototype = Object.create(NullDependency.prototype);
+ConstDependency.prototype.constructor = ConstDependency;
 
+ConstDependency.Template = function ConstDependencyTemplate() {};
+
+ConstDependency.Template.prototype.apply = function(dep, source) {
+	if(typeof dep.range === "number")
+		source.insert(dep.range, dep.expression);
+	else
 		source.replace(dep.range[0], dep.range[1] - 1, dep.expression);
-	}
 };
 
-module.exports = ConstDependency;
+ConstDependency.prototype.updateHash = function(hash) {
+	hash.update(this.range + "");
+	hash.update(this.expression + "");
+};

@@ -2,38 +2,30 @@
 	MIT License http://www.opensource.org/licenses/mit-license.php
 	Author Tobias Koppers @sokra
 */
-"use strict";
+var MultiEntryDependency = require("./dependencies/MultiEntryDependency");
+var SingleEntryDependency = require("./dependencies/SingleEntryDependency");
+var MultiModuleFactory = require("./MultiModuleFactory");
 
-const MultiEntryDependency = require("./dependencies/MultiEntryDependency");
-const SingleEntryDependency = require("./dependencies/SingleEntryDependency");
-const MultiModuleFactory = require("./MultiModuleFactory");
+function MultiEntryPlugin(context, entries, name) {
+	this.context = context;
+	this.entries = entries;
+	this.name = name;
+}
+module.exports = MultiEntryPlugin;
+MultiEntryPlugin.prototype.apply = function(compiler) {
+	compiler.plugin("compilation", function(compilation, params) {
+		var multiModuleFactory = new MultiModuleFactory();
+		var normalModuleFactory = params.normalModuleFactory;
 
-module.exports = class MultiEntryPlugin {
-	constructor(context, entries, name) {
-		this.context = context;
-		this.entries = entries;
-		this.name = name;
-	}
+		compilation.dependencyFactories.set(MultiEntryDependency, multiModuleFactory);
 
-	apply(compiler) {
-		compiler.plugin("compilation", (compilation, params) => {
-			const multiModuleFactory = new MultiModuleFactory();
-			const normalModuleFactory = params.normalModuleFactory;
-
-			compilation.dependencyFactories.set(MultiEntryDependency, multiModuleFactory);
-			compilation.dependencyFactories.set(SingleEntryDependency, normalModuleFactory);
-		});
-		compiler.plugin("make", (compilation, callback) => {
-			const dep = MultiEntryPlugin.createDependency(this.entries, this.name);
-			compilation.addEntry(this.context, dep, this.name, callback);
-		});
-	}
-
-	static createDependency(entries, name) {
-		return new MultiEntryDependency(entries.map((e, idx) => {
-			const dep = new SingleEntryDependency(e);
-			dep.loc = name + ":" + (100000 + idx);
+		compilation.dependencyFactories.set(SingleEntryDependency, normalModuleFactory);
+	});
+	compiler.plugin("make", function(compilation, callback) {
+		compilation.addEntry(this.context, new MultiEntryDependency(this.entries.map(function(e, idx) {
+			var dep = new SingleEntryDependency(e);
+			dep.loc = this.name + ":" + (100000 + idx);
 			return dep;
-		}), name);
-	}
+		}, this), this.name), this.name, callback);
+	}.bind(this));
 };

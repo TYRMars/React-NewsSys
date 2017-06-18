@@ -1,36 +1,41 @@
 var React = require('react');
 var ReactDOM = require('react-dom');
-import CompomentHeader from './components/header';
-import CompomentFooter from './components/footer';
+import ComponentHeader from './components/header';
+import ComponentFooter from './components/footer';
 import BodyIndex from './components/bodyindex';
+
 import 'antd/dist/antd.css';
-class Index extends React.Component {
 
-  componentWillMount(){
-    //定义你的逻辑即可
-    console.log("Index - componentWillMount");
-  }
+export default class Index extends React.Component {
 
-  componentDidMount(){
-    console.log("Index - componentDidMount");
-  }
+	componentWillMount(){
+		//定义你的逻辑即可
+		console.log("Index - componentWillMount");
+	}
 
-  render() {
-    // var components;
-    // if (!denglu) {
-    //   components = <CompomentLoginHeader/>;
-    // } else {
-    //   components = <CompomentHeader/>;
-    // }
-    return (
-      <div>
-      <CompomentHeader/>
-      <BodyIndex userid={123456}/>
-      <CompomentFooter/>
-      </div>
-    )
-  }
+	componentDidMount(){
+		console.log("Index - componentDidMount");
+	}
+
+	render() {
+		/*
+		var component;
+		if (用户已登录) {
+			component = <ComponentLoginedHeader/>
+		}
+		else{
+			component = <ComponentHeader/>
+		}
+		*/
+		return (
+			<div>
+				<ComponentHeader/>
+				<BodyIndex userid={999} username={"Parry1"}/>
+				<div>
+					{this.props.children}
+				</div>
+				<ComponentFooter/>
+			</div>
+		);
+	}
 }
-
-// 入口
-ReactDOM.render( < Index / > , document.getElementById('example'));

@@ -2,23 +2,16 @@
 	MIT License http://www.opensource.org/licenses/mit-license.php
 	Author Tobias Koppers @sokra
 */
-"use strict";
-const Dependency = require("../Dependency");
+var Dependency = require("../Dependency");
 
-class NullDependency extends Dependency {
-	get type() {
-		return "null";
-	}
-
-	isEqualResource() {
-		return false;
-	}
-
-	updateHash() {}
+function NullDependency() {
+	Dependency.call(this);
 }
-
-NullDependency.Template = class NullDependencyTemplate {
-	apply() {}
-};
-
 module.exports = NullDependency;
+
+NullDependency.prototype = Object.create(Dependency.prototype);
+NullDependency.prototype.constructor = NullDependency;
+NullDependency.prototype.type = "null";
+NullDependency.prototype.isEqualResource = function() {
+	return false;
+};

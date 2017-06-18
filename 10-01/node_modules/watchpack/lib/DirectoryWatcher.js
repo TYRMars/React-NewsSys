@@ -10,7 +10,7 @@ var path = require("path");
 
 var watcherManager = require("./watcherManager");
 
-var FS_ACCURACY = 10000;
+var FS_ACCURENCY = 10000;
 
 
 function withoutCase(str) {
@@ -31,7 +31,7 @@ Watcher.prototype.constructor = Watcher;
 
 Watcher.prototype.checkStartTime = function checkStartTime(mtime, initial) {
 	if(typeof this.startTime !== "number") return !initial;
-	var startTime = this.startTime;
+	var startTime = this.startTime && Math.floor(this.startTime / FS_ACCURENCY) * FS_ACCURENCY;
 	return startTime <= mtime;
 };
 
@@ -42,10 +42,9 @@ Watcher.prototype.close = function close() {
 
 function DirectoryWatcher(directoryPath, options) {
 	EventEmitter.call(this);
-	this.options = options;
 	this.path = directoryPath;
-	this.files = Object.create(null);
-	this.directories = Object.create(null);
+	this.files = {};
+	this.directories = {};
 	this.watcher = chokidar.watch(directoryPath, {
 		ignoreInitial: true,
 		persistent: true,
@@ -54,7 +53,6 @@ function DirectoryWatcher(directoryPath, options) {
 		atomic: false,
 		alwaysStat: true,
 		ignorePermissionErrors: true,
-		ignored: options.ignored,
 		usePolling: options.poll ? true : undefined,
 		interval: typeof options.poll === "number" ? options.poll : undefined
 	});
@@ -68,7 +66,7 @@ function DirectoryWatcher(directoryPath, options) {
 	this.nestedWatching = false;
 	this.initialScanRemoved = [];
 	this.doInitialScan();
-	this.watchers = Object.create(null);
+	this.watchers = {};
 	this.refs = 0;
 }
 module.exports = DirectoryWatcher;
@@ -79,19 +77,13 @@ DirectoryWatcher.prototype.constructor = DirectoryWatcher;
 DirectoryWatcher.prototype.setFileTime = function setFileTime(filePath, mtime, initial, type) {
 	var now = Date.now();
 	var old = this.files[filePath];
-
 	this.files[filePath] = [initial ? Math.min(now, mtime) : now, mtime];
-
-	// we add the fs accurency to reach the maximum possible mtime
-	if(mtime)
-		mtime = mtime + FS_ACCURACY;
-
 	if(!old) {
 		if(mtime) {
 			if(this.watchers[withoutCase(filePath)]) {
 				this.watchers[withoutCase(filePath)].forEach(function(w) {
 					if(!initial || w.checkStartTime(mtime, initial)) {
-						w.emit("change", mtime, initial ? "initial" : type);
+						w.emit("change", mtime);
 					}
 				});
 			}
@@ -99,26 +91,26 @@ DirectoryWatcher.prototype.setFileTime = function setFileTime(filePath, mtime, i
 	} else if(!initial && mtime && type !== "add") {
 		if(this.watchers[withoutCase(filePath)]) {
 			this.watchers[withoutCase(filePath)].forEach(function(w) {
-				w.emit("change", mtime, type);
+				w.emit("change", mtime);
 			});
 		}
 	} else if(!initial && !mtime) {
 		if(this.watchers[withoutCase(filePath)]) {
 			this.watchers[withoutCase(filePath)].forEach(function(w) {
-				w.emit("remove", type);
+				w.emit("remove");
 			});
 		}
 	}
 	if(this.watchers[withoutCase(this.path)]) {
 		this.watchers[withoutCase(this.path)].forEach(function(w) {
 			if(!initial || w.checkStartTime(mtime, initial)) {
-				w.emit("change", filePath, mtime, initial ? "initial" : type);
+				w.emit("change", filePath, mtime);
 			}
 		});
 	}
 };
 
-DirectoryWatcher.prototype.setDirectory = function setDirectory(directoryPath, exist, initial, type) {
+DirectoryWatcher.prototype.setDirectory = function setDirectory(directoryPath, exist, initial) {
 	var old = this.directories[directoryPath];
 	if(!old) {
 		if(exist) {
@@ -135,7 +127,7 @@ DirectoryWatcher.prototype.setDirectory = function setDirectory(directoryPath, e
 			delete this.directories[directoryPath];
 			if(!initial && this.watchers[withoutCase(this.path)]) {
 				this.watchers[withoutCase(this.path)].forEach(function(w) {
-					w.emit("change", directoryPath, w.data, initial ? "initial" : type);
+					w.emit("change", directoryPath, w.data);
 				});
 			}
 		}
@@ -144,11 +136,11 @@ DirectoryWatcher.prototype.setDirectory = function setDirectory(directoryPath, e
 
 DirectoryWatcher.prototype.createNestedWatcher = function(directoryPath) {
 	this.directories[directoryPath] = watcherManager.watchDirectory(directoryPath, this.options, 1);
-	this.directories[directoryPath].on("change", function(filePath, mtime, type) {
+	this.directories[directoryPath].on("change", function(filePath, mtime) {
 		if(this.watchers[withoutCase(this.path)]) {
 			this.watchers[withoutCase(this.path)].forEach(function(w) {
 				if(w.checkStartTime(mtime, false)) {
-					w.emit("change", filePath, mtime, type);
+					w.emit("change", filePath, mtime);
 				}
 			});
 		}
@@ -203,8 +195,7 @@ DirectoryWatcher.prototype.watch = function watch(filePath, startTime) {
 	}
 	process.nextTick(function() {
 		if(data) {
-			var ts = data[0] === data[1] ? data[0] + FS_ACCURACY : data[0];
-			if(ts >= startTime)
+			if(data[0] > startTime)
 				watcher.emit("change", data[1]);
 		} else if(this.initialScan && this.initialScanRemoved.indexOf(filePath) >= 0) {
 			watcher.emit("remove");
@@ -223,14 +214,23 @@ DirectoryWatcher.prototype.onFileAdded = function onFileAdded(filePath, stat) {
 DirectoryWatcher.prototype.onDirectoryAdded = function onDirectoryAdded(directoryPath /*, stat */) {
 	if(directoryPath.indexOf(this.path) !== 0) return;
 	if(/[\\\/]/.test(directoryPath.substr(this.path.length + 1))) return;
-	this.setDirectory(directoryPath, true, false, "add");
+	this.setDirectory(directoryPath, true, false);
 };
 
 DirectoryWatcher.prototype.onChange = function onChange(filePath, stat) {
 	if(filePath.indexOf(this.path) !== 0) return;
 	if(/[\\\/]/.test(filePath.substr(this.path.length + 1))) return;
 	var mtime = +stat.mtime;
-	ensureFsAccuracy(mtime);
+	if(FS_ACCURENCY > 1 && mtime % 1 !== 0)
+		FS_ACCURENCY = 1;
+	else if(FS_ACCURENCY > 10 && mtime % 10 !== 0)
+		FS_ACCURENCY = 10;
+	else if(FS_ACCURENCY > 100 && mtime % 100 !== 0)
+		FS_ACCURENCY = 100;
+	else if(FS_ACCURENCY > 1000 && mtime % 1000 !== 0)
+		FS_ACCURENCY = 1000;
+	else if(FS_ACCURENCY > 2000 && mtime % 2000 !== 0)
+		FS_ACCURENCY = 2000;
 	this.setFileTime(filePath, mtime, false, "change");
 };
 
@@ -246,7 +246,7 @@ DirectoryWatcher.prototype.onFileUnlinked = function onFileUnlinked(filePath) {
 DirectoryWatcher.prototype.onDirectoryUnlinked = function onDirectoryUnlinked(directoryPath) {
 	if(directoryPath.indexOf(this.path) !== 0) return;
 	if(/[\\\/]/.test(directoryPath.substr(this.path.length + 1))) return;
-	this.setDirectory(directoryPath, false, false, "unlink");
+	this.setDirectory(directoryPath, false, false);
 	if(this.initialScan) {
 		this.initialScanRemoved.push(directoryPath);
 	}
@@ -286,19 +286,16 @@ DirectoryWatcher.prototype.doInitialScan = function doInitialScan() {
 };
 
 DirectoryWatcher.prototype.getTimes = function() {
-	var obj = Object.create(null);
+	var obj = {};
 	var selfTime = 0;
 	Object.keys(this.files).forEach(function(file) {
 		var data = this.files[file];
-		var time;
 		if(data[1]) {
-			time = Math.max(data[0], data[1] + FS_ACCURACY);
-		} else {
-			time = data[0];
+			var time = Math.max(data[0], data[1]);
+			obj[file] = time;
+			if(time > selfTime)
+				selfTime = time;
 		}
-		obj[file] = time;
-		if(time > selfTime)
-			selfTime = time;
 	}, this);
 	if(this.nestedWatching) {
 		Object.keys(this.directories).forEach(function(dir) {
@@ -326,17 +323,3 @@ DirectoryWatcher.prototype.close = function() {
 	}
 	this.emit("closed");
 };
-
-function ensureFsAccuracy(mtime) {
-	if(!mtime) return;
-	if(FS_ACCURACY > 1 && mtime % 1 !== 0)
-		FS_ACCURACY = 1;
-	else if(FS_ACCURACY > 10 && mtime % 10 !== 0)
-		FS_ACCURACY = 10;
-	else if(FS_ACCURACY > 100 && mtime % 100 !== 0)
-		FS_ACCURACY = 100;
-	else if(FS_ACCURACY > 1000 && mtime % 1000 !== 0)
-		FS_ACCURACY = 1000;
-	else if(FS_ACCURACY > 2000 && mtime % 2000 !== 0)
-		FS_ACCURACY = 2000;
-}

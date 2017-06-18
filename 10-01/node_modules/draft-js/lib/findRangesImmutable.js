@@ -27,7 +27,9 @@ function findRangesImmutable(haystack, areEqualFn, filterFn, foundFn) {
   var cursor = 0;
 
   haystack.reduce(function (value, nextValue, nextIndex) {
+    /* $FlowFixMe(>=0.28.0): `value` could be undefined! */
     if (!areEqualFn(value, nextValue)) {
+      /* $FlowFixMe(>=0.28.0): `value` could be undefined! */
       if (filterFn(value)) {
         foundFn(cursor, nextIndex);
       }

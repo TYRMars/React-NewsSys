@@ -2,19 +2,16 @@
 	MIT License http://www.opensource.org/licenses/mit-license.php
 	Author Tobias Koppers @sokra
 */
-"use strict";
-const Dependency = require("../Dependency");
+var Dependency = require("../Dependency");
 
-class DllEntryDependency extends Dependency {
-	constructor(dependencies, name) {
-		super();
-		this.dependencies = dependencies;
-		this.name = name;
-	}
-
-	get type() {
-		return "dll entry";
-	}
+function DllEntryDependency(dependencies, name, type) {
+	Dependency.call(this);
+	this.dependencies = dependencies;
+	this.name = name;
+	this.type = type;
 }
-
 module.exports = DllEntryDependency;
+
+DllEntryDependency.prototype = Object.create(Dependency.prototype);
+DllEntryDependency.prototype.constructor = DllEntryDependency;
+DllEntryDependency.prototype.type = "dll entry";

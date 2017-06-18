@@ -6,7 +6,7 @@
  * LICENSE file in the root directory of this source tree. An additional grant
  * of patent rights can be found in the PATENTS file in the same directory.
  *
- * 
+ * @providesModule ReactComponentTreeHook
  */
 
 'use strict';
@@ -49,96 +49,113 @@ typeof Set === 'function' && isNative(Set) &&
 // Set.prototype.keys
 Set.prototype != null && typeof Set.prototype.keys === 'function' && isNative(Set.prototype.keys);
 
-var setItem;
-var getItem;
-var removeItem;
-var getItemIDs;
-var addRoot;
-var removeRoot;
-var getRootIDs;
+var itemMap;
+var rootIDSet;
+
+var itemByKey;
+var rootByKey;
 
 if (canUseCollections) {
-  var itemMap = new Map();
-  var rootIDSet = new Set();
-
-  setItem = function (id, item) {
-    itemMap.set(id, item);
-  };
-  getItem = function (id) {
-    return itemMap.get(id);
-  };
-  removeItem = function (id) {
-    itemMap['delete'](id);
-  };
-  getItemIDs = function () {
-    return Array.from(itemMap.keys());
-  };
-
-  addRoot = function (id) {
-    rootIDSet.add(id);
-  };
-  removeRoot = function (id) {
-    rootIDSet['delete'](id);
-  };
-  getRootIDs = function () {
-    return Array.from(rootIDSet.keys());
-  };
+  itemMap = new Map();
+  rootIDSet = new Set();
 } else {
-  var itemByKey = {};
-  var rootByKey = {};
-
-  // Use non-numeric keys to prevent V8 performance issues:
-  // https://github.com/facebook/react/pull/7232
-  var getKeyFromID = function (id) {
-    return '.' + id;
-  };
-  var getIDFromKey = function (key) {
-    return parseInt(key.substr(1), 10);
-  };
-
-  setItem = function (id, item) {
-    var key = getKeyFromID(id);
-    itemByKey[key] = item;
-  };
-  getItem = function (id) {
-    var key = getKeyFromID(id);
-    return itemByKey[key];
-  };
-  removeItem = function (id) {
-    var key = getKeyFromID(id);
-    delete itemByKey[key];
-  };
-  getItemIDs = function () {
-    return Object.keys(itemByKey).map(getIDFromKey);
-  };
-
-  addRoot = function (id) {
-    var key = getKeyFromID(id);
-    rootByKey[key] = true;
-  };
-  removeRoot = function (id) {
-    var key = getKeyFromID(id);
-    delete rootByKey[key];
-  };
-  getRootIDs = function () {
-    return Object.keys(rootByKey).map(getIDFromKey);
-  };
+  itemByKey = {};
+  rootByKey = {};
 }
 
 var unmountedIDs = [];
 
+// Use non-numeric keys to prevent V8 performance issues:
+// https://github.com/facebook/react/pull/7232
+function getKeyFromID(id) {
+  return '.' + id;
+}
+function getIDFromKey(key) {
+  return parseInt(key.substr(1), 10);
+}
+
+function get(id) {
+  if (canUseCollections) {
+    return itemMap.get(id);
+  } else {
+    var key = getKeyFromID(id);
+    return itemByKey[key];
+  }
+}
+
+function remove(id) {
+  if (canUseCollections) {
+    itemMap['delete'](id);
+  } else {
+    var key = getKeyFromID(id);
+    delete itemByKey[key];
+  }
+}
+
+function create(id, element, parentID) {
+  var item = {
+    element: element,
+    parentID: parentID,
+    text: null,
+    childIDs: [],
+    isMounted: false,
+    updateCount: 0
+  };
+
+  if (canUseCollections) {
+    itemMap.set(id, item);
+  } else {
+    var key = getKeyFromID(id);
+    itemByKey[key] = item;
+  }
+}
+
+function addRoot(id) {
+  if (canUseCollections) {
+    rootIDSet.add(id);
+  } else {
+    var key = getKeyFromID(id);
+    rootByKey[key] = true;
+  }
+}
+
+function removeRoot(id) {
+  if (canUseCollections) {
+    rootIDSet['delete'](id);
+  } else {
+    var key = getKeyFromID(id);
+    delete rootByKey[key];
+  }
+}
+
+function getRegisteredIDs() {
+  if (canUseCollections) {
+    return Array.from(itemMap.keys());
+  } else {
+    return Object.keys(itemByKey).map(getIDFromKey);
+  }
+}
+
+function getRootIDs() {
+  if (canUseCollections) {
+    return Array.from(rootIDSet.keys());
+  } else {
+    return Object.keys(rootByKey).map(getIDFromKey);
+  }
+}
+
 function purgeDeep(id) {
-  var item = getItem(id);
+  var item = get(id);
   if (item) {
     var childIDs = item.childIDs;
 
-    removeItem(id);
+    remove(id);
     childIDs.forEach(purgeDeep);
   }
 }
 
 function describeComponentFrame(name, source, ownerName) {
-  return '\n    in ' + (name || 'Unknown') + (source ? ' (at ' + source.fileName.replace(/^.*[\\\/]/, '') + ':' + source.lineNumber + ')' : ownerName ? ' (created by ' + ownerName + ')' : '');
+  return '\n    in ' + name + (source ? ' (at ' + source.fileName.replace(/^.*[\\\/]/, '') + ':' + source.lineNumber + ')' : ownerName ? ' (created by ' + ownerName + ')' : '');
 }
 
 function getDisplayName(element) {
@@ -167,13 +184,12 @@ function describeID(id) {
 
 var ReactComponentTreeHook = {
   onSetChildren: function (id, nextChildIDs) {
-    var item = getItem(id);
-    !item ? process.env.NODE_ENV !== 'production' ? invariant(false, 'Item must have been set') : _prodInvariant('144') : void 0;
+    var item = get(id);
     item.childIDs = nextChildIDs;
 
     for (var i = 0; i < nextChildIDs.length; i++) {
       var nextChildID = nextChildIDs[i];
-      var nextChild = getItem(nextChildID);
+      var nextChild = get(nextChildID);
       !nextChild ? process.env.NODE_ENV !== 'production' ? invariant(false, 'Expected hook events to fire for the child before its parent includes it in onSetChildren().') : _prodInvariant('140') : void 0;
       !(nextChild.childIDs != null || typeof nextChild.element !== 'object' || nextChild.element == null) ? process.env.NODE_ENV !== 'production' ? invariant(false, 'Expected onSetChildren() to fire for a container child before its parent includes it in onSetChildren().') : _prodInvariant('141') : void 0;
       !nextChild.isMounted ? process.env.NODE_ENV !== 'production' ? invariant(false, 'Expected onMountComponent() to fire for the child before its parent includes it in onSetChildren().') : _prodInvariant('71') : void 0;
@@ -181,24 +197,16 @@ var ReactComponentTreeHook = {
         nextChild.parentID = id;
         // TODO: This shouldn't be necessary but mounting a new root during in
         // componentWillMount currently causes not-yet-mounted components to
-        // be purged from our tree data so their parent id is missing.
+        // be purged from our tree data so their parent ID is missing.
       }
       !(nextChild.parentID === id) ? process.env.NODE_ENV !== 'production' ? invariant(false, 'Expected onBeforeMountComponent() parent and onSetChildren() to be consistent (%s has parents %s and %s).', nextChildID, nextChild.parentID, id) : _prodInvariant('142', nextChildID, nextChild.parentID, id) : void 0;
     }
   },
   onBeforeMountComponent: function (id, element, parentID) {
-    var item = {
-      element: element,
-      parentID: parentID,
-      text: null,
-      childIDs: [],
-      isMounted: false,
-      updateCount: 0
-    };
-    setItem(id, item);
+    create(id, element, parentID);
   },
   onBeforeUpdateComponent: function (id, element) {
-    var item = getItem(id);
+    var item = get(id);
     if (!item || !item.isMounted) {
       // We may end up here as a result of setState() in componentWillUnmount().
       // In this case, ignore the element.
@@ -207,8 +215,7 @@ var ReactComponentTreeHook = {
     item.element = element;
   },
   onMountComponent: function (id) {
-    var item = getItem(id);
-    !item ? process.env.NODE_ENV !== 'production' ? invariant(false, 'Item must have been set') : _prodInvariant('144') : void 0;
+    var item = get(id);
     item.isMounted = true;
     var isRoot = item.parentID === 0;
     if (isRoot) {
@@ -216,7 +223,7 @@ var ReactComponentTreeHook = {
     }
   },
   onUpdateComponent: function (id) {
-    var item = getItem(id);
+    var item = get(id);
     if (!item || !item.isMounted) {
       // We may end up here as a result of setState() in componentWillUnmount().
       // In this case, ignore the element.
@@ -225,7 +232,7 @@ var ReactComponentTreeHook = {
     item.updateCount++;
   },
   onUnmountComponent: function (id) {
-    var item = getItem(id);
+    var item = get(id);
     if (item) {
       // We need to check if it exists.
       // `item` might not exist if it is inside an error boundary, and a sibling
@@ -253,15 +260,16 @@ var ReactComponentTreeHook = {
     unmountedIDs.length = 0;
   },
   isMounted: function (id) {
-    var item = getItem(id);
+    var item = get(id);
     return item ? item.isMounted : false;
   },
   getCurrentStackAddendum: function (topElement) {
     var info = '';
     if (topElement) {
-      var name = getDisplayName(topElement);
+      var type = topElement.type;
+      var name = typeof type === 'function' ? type.displayName || type.name : type;
       var owner = topElement._owner;
-      info += describeComponentFrame(name, topElement._source, owner && owner.getName());
+      info += describeComponentFrame(name || 'Unknown', topElement._source, owner && owner.getName());
     }
 
     var currentOwner = ReactCurrentOwner.current;
@@ -279,7 +287,7 @@ var ReactComponentTreeHook = {
     return info;
   },
   getChildIDs: function (id) {
-    var item = getItem(id);
+    var item = get(id);
     return item ? item.childIDs : [];
   },
   getDisplayName: function (id) {
@@ -290,7 +298,7 @@ var ReactComponentTreeHook = {
     return getDisplayName(element);
   },
   getElement: function (id) {
-    var item = getItem(id);
+    var item = get(id);
     return item ? item.element : null;
   },
   getOwnerID: function (id) {
@@ -301,11 +309,11 @@ var ReactComponentTreeHook = {
     return element._owner._debugID;
   },
   getParentID: function (id) {
-    var item = getItem(id);
+    var item = get(id);
     return item ? item.parentID : null;
   },
   getSource: function (id) {
-    var item = getItem(id);
+    var item = get(id);
     var element = item ? item.element : null;
     var source = element != null ? element._source : null;
     return source;
@@ -321,13 +329,14 @@ var ReactComponentTreeHook = {
     }
   },
   getUpdateCount: function (id) {
-    var item = getItem(id);
+    var item = get(id);
     return item ? item.updateCount : 0;
   },
 
 
-  getRootIDs: getRootIDs,
-  getRegisteredIDs: getItemIDs
+  getRegisteredIDs: getRegisteredIDs,
+
+  getRootIDs: getRootIDs
 };
 
 module.exports = ReactComponentTreeHook;

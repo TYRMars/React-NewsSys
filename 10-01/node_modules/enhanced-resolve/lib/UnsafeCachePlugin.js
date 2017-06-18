@@ -2,40 +2,31 @@
 	MIT License http://www.opensource.org/licenses/mit-license.php
 	Author Tobias Koppers @sokra
 */
-var createInnerCallback = require("./createInnerCallback");
-
-function UnsafeCachePlugin(source, filterPredicate, cache, target) {
-	this.source = source;
-	this.filterPredicate = filterPredicate;
+function UnsafeCachePlugin(regExps, cache) {
+	this.regExps = regExps || [/./];
+	if(this.regExps === true) this.regExps = [/./];
+	else if(!Array.isArray(this.regExps)) this.regExps = [this.regExps];
 	this.cache = cache || {};
-	this.target = target;
 }
 module.exports = UnsafeCachePlugin;
 
-function getCacheId(request) {
-	return JSON.stringify({
-		context: request.context,
-		path: request.path,
-		query: request.query,
-		request: request.request
-	});
-}
-
 UnsafeCachePlugin.prototype.apply = function(resolver) {
-	var filterPredicate = this.filterPredicate;
+	var oldResolve = resolver.resolve;
+	var regExps = this.regExps;
 	var cache = this.cache;
-	var target = this.target;
-	resolver.plugin(this.source, function(request, callback) {
-		if(!filterPredicate(request)) return callback();
-		var cacheId = getCacheId(request);
-		var cacheEntry = cache[cacheId];
-		if(cacheEntry) {
-			return callback(null, cacheEntry);
+	resolver.resolve = function resolve(context, request, callback) {
+		var id = context + "->" + request;
+		if(cache[id]) {
+			// From cache
+			return callback(null, cache[id]);
 		}
-		resolver.doResolve(target, request, null, createInnerCallback(function(err, result) {
+		oldResolve.call(resolver, context, request, function(err, result) {
 			if(err) return callback(err);
-			if(result) return callback(null, cache[cacheId] = result);
-			callback();
-		}, callback));
-	});
+			var doCache = regExps.some(function(regExp) {
+				return regExp.test(result.path);
+			});
+			if(!doCache) return callback(null, result);
+			callback(null, cache[id] = result);
+		});
+	};
 };

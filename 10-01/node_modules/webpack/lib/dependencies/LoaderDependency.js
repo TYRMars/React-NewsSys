@@ -2,17 +2,13 @@
 	MIT License http://www.opensource.org/licenses/mit-license.php
 	Author Tobias Koppers @sokra
 */
-"use strict";
-const ModuleDependency = require("./ModuleDependency");
+var ModuleDependency = require("./ModuleDependency");
 
-class LoaderDependency extends ModuleDependency {
-	constructor(request) {
-		super(request);
-	}
-
-	get type() {
-		return "loader";
-	}
+function LoaderDependency(request) {
+	ModuleDependency.call(this, request);
 }
-
 module.exports = LoaderDependency;
+
+LoaderDependency.prototype = Object.create(ModuleDependency.prototype);
+LoaderDependency.prototype.constructor = LoaderDependency;
+LoaderDependency.prototype.type = "loader";

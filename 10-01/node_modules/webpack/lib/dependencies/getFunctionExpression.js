@@ -4,14 +4,13 @@
 */
 module.exports = function(expr) {
 	// <FunctionExpression>
-	if(expr.type === "FunctionExpression" || expr.type === "ArrowFunctionExpression") {
+	if(expr.type === "FunctionExpression") {
 		return {
 			fn: expr,
 			expressions: [],
 			needThis: false
 		};
 	}
-
 	// <FunctionExpression>.bind(<Expression>)
 	if(expr.type === "CallExpression" &&
 		expr.callee.type === "MemberExpression" &&

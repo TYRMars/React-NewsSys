@@ -2,17 +2,13 @@
 	MIT License http://www.opensource.org/licenses/mit-license.php
 	Author Tobias Koppers @sokra
 */
-"use strict";
-const ModuleDependency = require("./ModuleDependency");
+var ModuleDependency = require("./ModuleDependency");
 
-class PrefetchDependency extends ModuleDependency {
-	constructor(request) {
-		super(request);
-	}
-
-	get type() {
-		return "prefetch";
-	}
+function PrefetchDependency(request) {
+	ModuleDependency.call(this, request);
 }
-
 module.exports = PrefetchDependency;
+
+PrefetchDependency.prototype = Object.create(ModuleDependency.prototype);
+PrefetchDependency.prototype.constructor = PrefetchDependency;
+PrefetchDependency.prototype.type = "prefetch";

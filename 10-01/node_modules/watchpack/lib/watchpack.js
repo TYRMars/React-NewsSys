@@ -11,15 +11,13 @@ function Watchpack(options) {
 	if(!options.aggregateTimeout) options.aggregateTimeout = 200;
 	this.options = options;
 	this.watcherOptions = {
-		ignored: options.ignored,
 		poll: options.poll
 	};
 	this.fileWatchers = [];
 	this.dirWatchers = [];
-	this.mtimes = Object.create(null);
+	this.mtimes = {};
 	this.paused = false;
 	this.aggregatedChanges = [];
-	this.aggregatedRemovals = [];
 	this.aggregateTimeout = 0;
 	this._onTimeout = this._onTimeout.bind(this);
 }
@@ -82,7 +80,7 @@ function addWatchersToArray(watchers, array) {
 Watchpack.prototype.getTimes = function() {
 	var directoryWatchers = [];
 	addWatchersToArray(this.fileWatchers.concat(this.dirWatchers), directoryWatchers);
-	var obj = Object.create(null);
+	var obj = {};
 	directoryWatchers.forEach(function(w) {
 		var times = w.getTimes();
 		Object.keys(times).forEach(function(file) {
@@ -93,18 +91,13 @@ Watchpack.prototype.getTimes = function() {
 };
 
 Watchpack.prototype._fileWatcher = function _fileWatcher(file, watcher) {
-	watcher.on("change", function(mtime, type) {
-		this._onChange(file, mtime, file, type);
-	}.bind(this));
-	watcher.on("remove", function(type) {
-		this._onRemove(file, file, type);
-	}.bind(this));
+	watcher.on("change", this._onChange.bind(this, file));
 	return watcher;
 };
 
 Watchpack.prototype._dirWatcher = function _dirWatcher(item, watcher) {
-	watcher.on("change", function(file, mtime, type) {
-		this._onChange(item, mtime, file, type);
+	watcher.on("change", function(file, mtime) {
+		this._onChange(item, mtime, file);
 	}.bind(this));
 	return watcher;
 };
@@ -121,23 +114,9 @@ Watchpack.prototype._onChange = function _onChange(item, mtime, file) {
 	this.aggregateTimeout = setTimeout(this._onTimeout, this.options.aggregateTimeout);
 };
 
-Watchpack.prototype._onRemove = function _onRemove(item, file) {
-	file = file || item;
-	delete this.mtimes[item];
-	if(this.paused) return;
-	this.emit("remove", item);
-	if(this.aggregateTimeout)
-		clearTimeout(this.aggregateTimeout);
-	if(this.aggregatedRemovals.indexOf(item) < 0)
-		this.aggregatedRemovals.push(item);
-	this.aggregateTimeout = setTimeout(this._onTimeout, this.options.aggregateTimeout);
-};
-
 Watchpack.prototype._onTimeout = function _onTimeout() {
 	this.aggregateTimeout = 0;
 	var changes = this.aggregatedChanges;
-	var removals = this.aggregatedRemovals;
 	this.aggregatedChanges = [];
-	this.aggregatedRemovals = [];
-	this.emit("aggregated", changes, removals);
+	this.emit("aggregated", changes);
 };

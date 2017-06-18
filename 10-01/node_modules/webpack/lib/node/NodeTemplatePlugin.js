@@ -2,26 +2,20 @@
 	MIT License http://www.opensource.org/licenses/mit-license.php
 	Author Tobias Koppers @sokra
 */
+var NodeMainTemplatePlugin = require("./NodeMainTemplatePlugin");
+var NodeChunkTemplatePlugin = require("./NodeChunkTemplatePlugin");
+var NodeHotUpdateChunkTemplatePlugin = require("./NodeHotUpdateChunkTemplatePlugin");
 
-"use strict";
-
-const NodeMainTemplatePlugin = require("./NodeMainTemplatePlugin");
-const NodeChunkTemplatePlugin = require("./NodeChunkTemplatePlugin");
-const NodeHotUpdateChunkTemplatePlugin = require("./NodeHotUpdateChunkTemplatePlugin");
-
-class NodeTemplatePlugin {
-	constructor(options) {
-		options = options || {};
-		this.asyncChunkLoading = options.asyncChunkLoading;
-	}
-
-	apply(compiler) {
-		compiler.plugin("this-compilation", (compilation) => {
-			compilation.mainTemplate.apply(new NodeMainTemplatePlugin(this.asyncChunkLoading));
-			compilation.chunkTemplate.apply(new NodeChunkTemplatePlugin());
-			compilation.hotUpdateChunkTemplate.apply(new NodeHotUpdateChunkTemplatePlugin());
-		});
-	}
+function NodeTemplatePlugin(options, asyncChunkLoading) {
+	// TODO remove options parameter
+	this.options = options;
+	this.asyncChunkLoading = asyncChunkLoading;
 }
-
 module.exports = NodeTemplatePlugin;
+NodeTemplatePlugin.prototype.apply = function(compiler) {
+	compiler.plugin("this-compilation", function(compilation) {
+		compilation.mainTemplate.apply(new NodeMainTemplatePlugin(this.asyncChunkLoading));
+		compilation.chunkTemplate.apply(new NodeChunkTemplatePlugin());
+		compilation.hotUpdateChunkTemplate.apply(new NodeHotUpdateChunkTemplatePlugin());
+	}.bind(this));
+};

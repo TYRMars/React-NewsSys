@@ -2,9 +2,9 @@
 	MIT License http://www.opensource.org/licenses/mit-license.php
 	Author Tobias Koppers @sokra
 */
-"use strict";
-
-class OptionsApply {
-	process(options, compiler) {}
-}
+function OptionsApply() {}
 module.exports = OptionsApply;
+
+OptionsApply.prototype.process = function( /* options, compiler */ ) {
+
+};

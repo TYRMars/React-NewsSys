@@ -2,17 +2,13 @@
 	MIT License http://www.opensource.org/licenses/mit-license.php
 	Author Tobias Koppers @sokra
 */
-"use strict";
-const ModuleDependency = require("./ModuleDependency");
+var ModuleDependency = require("./ModuleDependency");
 
-class SingleEntryDependency extends ModuleDependency {
-	constructor(request) {
-		super(request);
-	}
-
-	get type() {
-		return "single entry";
-	}
+function SingleEntryDependency(request) {
+	ModuleDependency.call(this, request);
 }
-
 module.exports = SingleEntryDependency;
+
+SingleEntryDependency.prototype = Object.create(ModuleDependency.prototype);
+SingleEntryDependency.prototype.constructor = SingleEntryDependency;
+SingleEntryDependency.prototype.type = "single entry";

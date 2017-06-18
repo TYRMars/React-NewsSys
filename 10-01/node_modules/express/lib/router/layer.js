@@ -35,7 +35,7 @@ function Layer(path, options, fn) {
     return new Layer(path, options, fn);
   }
 
-  debug('new %o', path)
+  debug('new %s', path);
   var opts = options || {};
 
   this.handle = fn;
@@ -44,9 +44,9 @@ function Layer(path, options, fn) {
   this.path = undefined;
   this.regexp = pathRegexp(path, this.keys = [], opts);
 
-  // set fast path flags
-  this.regexp.fast_star = path === '*'
-  this.regexp.fast_slash = path === '/' && opts.end === false
+  if (path === '/' && opts.end === false) {
+    this.regexp.fast_slash = true;
+  }
 }
 
 /**
@@ -108,28 +108,23 @@ Layer.prototype.handle_request = function handle(req, res, next) {
  */
 
 Layer.prototype.match = function match(path) {
-  var match
-
-  if (path != null) {
-    // fast path non-ending match for / (any path matches)
-    if (this.regexp.fast_slash) {
-      this.params = {}
-      this.path = ''
-      return true
-    }
-
-    // fast path for * (everything matched in a param)
-    if (this.regexp.fast_star) {
-      this.params = {'0': decode_param(path)}
-      this.path = path
-      return true
-    }
-
-    // match the path
-    match = this.regexp.exec(path)
+  if (path == null) {
+    // no path, nothing matches
+    this.params = undefined;
+    this.path = undefined;
+    return false;
   }
 
-  if (!match) {
+  if (this.regexp.fast_slash) {
+    // fast path non-ending match for / (everything matches)
+    this.params = {};
+    this.path = '';
+    return true;
+  }
+
+  var m = this.regexp.exec(path);
+
+  if (!m) {
     this.params = undefined;
     this.path = undefined;
     return false;
@@ -137,15 +132,15 @@ Layer.prototype.match = function match(path) {
 
   // store values
   this.params = {};
-  this.path = match[0]
+  this.path = m[0];
 
   var keys = this.keys;
   var params = this.params;
 
-  for (var i = 1; i < match.length; i++) {
+  for (var i = 1; i < m.length; i++) {
     var key = keys[i - 1];
     var prop = key.name;
-    var val = decode_param(match[i])
+    var val = decode_param(m[i]);
 
     if (val !== undefined || !(hasOwnProperty.call(params, prop))) {
       params[prop] = val;

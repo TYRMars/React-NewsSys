@@ -2,35 +2,36 @@
 	MIT License http://www.opensource.org/licenses/mit-license.php
 	Author Tobias Koppers @sokra
 */
-"use strict";
+var ConcatSource = require("webpack-core/lib/ConcatSource");
+var Template = require("./Template");
 
-const ConcatSource = require("webpack-sources").ConcatSource;
-const Template = require("./Template");
+function ChunkTemplate(outputOptions) {
+	Template.call(this, outputOptions);
+}
 
-module.exports = class ChunkTemplate extends Template {
-	constructor(outputOptions) {
-		super(outputOptions);
+module.exports = ChunkTemplate;
+
+ChunkTemplate.prototype = Object.create(Template.prototype);
+ChunkTemplate.prototype.render = function(chunk, moduleTemplate, dependencyTemplates) {
+	var modules = this.renderChunkModules(chunk, moduleTemplate, dependencyTemplates);
+	var core = this.applyPluginsWaterfall("modules", modules, chunk, moduleTemplate, dependencyTemplates);
+	var source = this.applyPluginsWaterfall("render", core, chunk, moduleTemplate, dependencyTemplates);
+	if(chunk.modules.some(function(module) {
+			return module.id === 0;
+		})) {
+		source = this.applyPluginsWaterfall("render-with-entry", source, chunk);
 	}
+	chunk.rendered = true;
+	return new ConcatSource(source, ";");
+};
 
-	render(chunk, moduleTemplate, dependencyTemplates) {
-		const moduleSources = this.renderChunkModules(chunk, moduleTemplate, dependencyTemplates);
-		const core = this.applyPluginsWaterfall("modules", moduleSources, chunk, moduleTemplate, dependencyTemplates);
-		let source = this.applyPluginsWaterfall("render", core, chunk, moduleTemplate, dependencyTemplates);
-		if(chunk.hasEntryModule()) {
-			source = this.applyPluginsWaterfall("render-with-entry", source, chunk);
-		}
-		chunk.rendered = true;
-		return new ConcatSource(source, ";");
-	}
+ChunkTemplate.prototype.updateHash = function(hash) {
+	hash.update("ChunkTemplate");
+	hash.update("2");
+	this.applyPlugins("hash", hash);
+};
 
-	updateHash(hash) {
-		hash.update("ChunkTemplate");
-		hash.update("2");
-		this.applyPlugins("hash", hash);
-	}
-
-	updateHashForChunk(hash, chunk) {
-		this.updateHash(hash);
-		this.applyPlugins("hash-for-chunk", hash, chunk);
-	}
+ChunkTemplate.prototype.updateHashForChunk = function(hash, chunk) {
+	this.updateHash(hash);
+	this.applyPlugins("hash-for-chunk", hash, chunk);
 };

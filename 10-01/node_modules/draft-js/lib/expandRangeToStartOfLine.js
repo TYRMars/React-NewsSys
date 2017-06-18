@@ -32,13 +32,10 @@ function getLineHeightPx(element) {
   div.style.position = 'absolute';
   div.textContent = 'M';
 
-  var documentBody = document.body;
-  !documentBody ? process.env.NODE_ENV !== 'production' ? invariant(false, 'Missing document.body') : invariant(false) : void 0;
-
   // forced layout here
-  documentBody.appendChild(div);
+  document.body.appendChild(div);
   var rect = div.getBoundingClientRect();
-  documentBody.removeChild(div);
+  document.body.removeChild(div);
 
   return rect.height;
 }

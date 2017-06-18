@@ -2,7 +2,7 @@
 	MIT License http://www.opensource.org/licenses/mit-license.php
 	Author Tobias Koppers @sokra
 */
-var asyncLib = require("async");
+var async = require("async");
 var path = require("path");
 
 var Tapable = require("tapable");
@@ -18,18 +18,12 @@ module.exports = ContextModuleFactory;
 ContextModuleFactory.prototype = Object.create(Tapable.prototype);
 ContextModuleFactory.prototype.constructor = ContextModuleFactory;
 
-ContextModuleFactory.prototype.create = function(data, callback) {
-	var module = this;
-	var context = data.context;
-	var dependencies = data.dependencies;
-	var dependency = dependencies[0];
+ContextModuleFactory.prototype.create = function(context, dependency, callback) {
 	this.applyPluginsAsyncWaterfall("before-resolve", {
 		context: context,
 		request: dependency.request,
 		recursive: dependency.recursive,
-		regExp: dependency.regExp,
-		async: dependency.async,
-		dependencies: dependencies
+		regExp: dependency.regExp
 	}, function(err, result) {
 		if(err) return callback(err);
 
@@ -40,8 +34,6 @@ ContextModuleFactory.prototype.create = function(data, callback) {
 		var request = result.request;
 		var recursive = result.recursive;
 		var regExp = result.regExp;
-		var asyncContext = result.async;
-		var dependencies = result.dependencies;
 
 		var loaders, resource, loadersPrefix = "";
 		var idx = request.lastIndexOf("!");
@@ -59,54 +51,36 @@ ContextModuleFactory.prototype.create = function(data, callback) {
 			resource = request;
 		}
 
-		var resolvers = module.resolvers;
-
-		asyncLib.parallel([
-			function(callback) {
-				resolvers.context.resolve({}, context, resource, function(err, result) {
-					if(err) return callback(err);
-					callback(null, result);
-				});
-			},
-			function(callback) {
-				asyncLib.map(loaders, function(loader, callback) {
-					resolvers.loader.resolve({}, context, loader, function(err, result) {
-						if(err) return callback(err);
-						callback(null, result);
-					});
-				}, callback);
-			}
+		async.parallel([
+			this.resolvers.context.resolve.bind(this.resolvers.context, context, resource),
+			async.map.bind(async, loaders, this.resolvers.loader.resolve.bind(this.resolvers.loader, context))
 		], function(err, result) {
 			if(err) return callback(err);
 
-			module.applyPluginsAsyncWaterfall("after-resolve", {
+			this.applyPluginsAsyncWaterfall("after-resolve", {
 				loaders: loadersPrefix + result[1].join("!") + (result[1].length > 0 ? "!" : ""),
 				resource: result[0],
 				recursive: recursive,
 				regExp: regExp,
-				async: asyncContext,
-				dependencies: dependencies,
-				resolveDependencies: module.resolveDependencies.bind(module)
+				resolveDependencies: this.resolveDependencies.bind(this)
 			}, function(err, result) {
 				if(err) return callback(err);
 
 				// Ignored
 				if(!result) return callback();
 
-				return callback(null, new ContextModule(result.resolveDependencies, result.resource, result.recursive, result.regExp, result.loaders, result.async, dependency.chunkName));
+				return callback(null, new ContextModule(result.resolveDependencies, result.resource, result.recursive, result.regExp, result.loaders));
 			});
-		});
-	});
+		}.bind(this));
+	}.bind(this));
 };
 
 ContextModuleFactory.prototype.resolveDependencies = function resolveDependencies(fs, resource, recursive, regExp, callback) {
-	if(!regExp || !resource)
-		return callback(null, []);
 	(function addDirectory(directory, callback) {
 		fs.readdir(directory, function(err, files) {
 			if(err) return callback(err);
 			if(!files || files.length === 0) return callback(null, []);
-			asyncLib.map(files.filter(function(p) {
+			async.map(files.filter(function(p) {
 				return p.indexOf(".") !== 0;
 			}), function(seqment, callback) {
 
@@ -126,7 +100,6 @@ ContextModuleFactory.prototype.resolveDependencies = function resolveDependencie
 							context: resource,
 							request: "." + subResource.substr(resource.length).replace(/\\/g, "/")
 						};
-
 						this.applyPluginsAsyncWaterfall("alternatives", [obj], function(err, alternatives) {
 							if(err) return callback(err);
 							alternatives = alternatives.filter(function(obj) {

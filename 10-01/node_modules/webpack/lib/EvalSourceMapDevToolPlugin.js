@@ -2,31 +2,24 @@
 	MIT License http://www.opensource.org/licenses/mit-license.php
 	Author Tobias Koppers @sokra
 */
-"use strict";
+var EvalSourceMapDevToolModuleTemplatePlugin = require("./EvalSourceMapDevToolModuleTemplatePlugin");
+var SourceMapDevToolModuleOptionsPlugin = require("./SourceMapDevToolModuleOptionsPlugin");
 
-const EvalSourceMapDevToolModuleTemplatePlugin = require("./EvalSourceMapDevToolModuleTemplatePlugin");
-const SourceMapDevToolModuleOptionsPlugin = require("./SourceMapDevToolModuleOptionsPlugin");
-
-class EvalSourceMapDevToolPlugin {
-	constructor(options) {
-		if(arguments.length > 1)
-			throw new Error("EvalSourceMapDevToolPlugin only takes one argument (pass an options object)");
-		if(typeof options === "string") {
-			options = {
-				append: options
-			};
-		}
-		if(!options) options = {};
+function EvalSourceMapDevToolPlugin(options, moduleFilenameTemplate) {
+	if(!options || typeof options !== "object") {
+		this.options = {
+			append: options,
+			moduleFilenameTemplate: moduleFilenameTemplate
+		};
+	} else {
 		this.options = options;
 	}
-
-	apply(compiler) {
-		const options = this.options;
-		compiler.plugin("compilation", (compilation) => {
-			new SourceMapDevToolModuleOptionsPlugin(options).apply(compilation);
-			compilation.moduleTemplate.apply(new EvalSourceMapDevToolModuleTemplatePlugin(compilation, options));
-		});
-	}
 }
-
 module.exports = EvalSourceMapDevToolPlugin;
+EvalSourceMapDevToolPlugin.prototype.apply = function(compiler) {
+	var options = this.options;
+	compiler.plugin("compilation", function(compilation) {
+		new SourceMapDevToolModuleOptionsPlugin(options).apply(compilation);
+		compilation.moduleTemplate.apply(new EvalSourceMapDevToolModuleTemplatePlugin(compilation, options, options.append, options.moduleFilenameTemplate));
+	});
+};

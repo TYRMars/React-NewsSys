@@ -1,36 +1,33 @@
-// webpack.config.js
-var webpack = require("webpack");
-var path = require("path");
+var debug = process.env.NODE_ENV !== "production";
+var webpack = require('webpack');
+var path = require('path');
 
 module.exports = {
-  devtool: 'source-map',
-  context: path.resolve(__dirname, "src"),
-  entry: "./js/index.js",
-  output: {
-    path: path.resolve(__dirname, "dist"),
-    filename: 'bundle.js' // 打包输出的文件
-  },
+  context: path.join(__dirname),
+  devtool: debug ? "inline-sourcemap" : null,
+  entry: "./src/js/root.js",
   module: {
-    rules: [{
-        test: /\.js$/, // test 去判断是否为.js或.jsx,是的话就是进行es6和jsx的编译
-        exclude: /(node_modules)/,
-        use: [{
-          loader: 'babel-loader',
-          //配置参数;
-          options: {
-            presets: ['es2015', 'react'],
-            plugins: ['react-html-attrs']
-          }
-        }, ]
-      },
+    loaders: [
       {
-        test: /\.css$/,
-        use: [{
-          loader: 'style-loader',
-        }, {
-          loader: 'css-loader',
-        }]
+        test: /\.js?$/,
+        exclude: /(node_modules)/,
+        loader: 'babel-loader',
+        query: {
+          presets: ['react', 'es2015'],
+          plugins: ['react-html-attrs'], //添加组件的插件配置
+        }
       },
+      //下面是使用 ant-design 的配置文件
+      { test: /\.css$/, loader: 'style-loader!css-loader' }
     ]
   },
+  output: {
+    path: __dirname,
+    filename: "./src/bundle.js"
+  },
+  plugins: debug ? [] : [
+    new webpack.optimize.DedupePlugin(),
+    new webpack.optimize.OccurenceOrderPlugin(),
+    new webpack.optimize.UglifyJsPlugin({ mangle: false, sourcemap: false }),
+  ],
 };

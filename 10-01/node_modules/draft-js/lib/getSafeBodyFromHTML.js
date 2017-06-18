@@ -14,8 +14,6 @@
 
 var UserAgent = require('fbjs/lib/UserAgent');
 
-var invariant = require('fbjs/lib/invariant');
-
 var isOldIE = UserAgent.isBrowser('IE <= 9');
 
 // Provides a dom node that will not execute scripts
@@ -28,7 +26,6 @@ function getSafeBodyFromHTML(html) {
   // Provides a safe context
   if (!isOldIE && document.implementation && document.implementation.createHTMLDocument) {
     doc = document.implementation.createHTMLDocument('foo');
-    !doc.documentElement ? process.env.NODE_ENV !== 'production' ? invariant(false, 'Missing doc.documentElement') : invariant(false) : void 0;
     doc.documentElement.innerHTML = html;
     root = doc.getElementsByTagName('body')[0];
   }
