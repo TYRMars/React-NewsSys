@@ -1049,6 +1049,7 @@ export default class CompomentFooter extends React.Component{
 
 ## 10-01
 ### React Router概念
+* 由于对于新版的`Router`的不熟悉，这节开始转向`Router2`和`webpack1`，等待`React-Router4`理解后，我会更新这几章
 * [Router](https://github.com/ReactTraining/react-router)
 * 以上`Router`采用的是`Router2`
 * `Router`中文是路由的意思。
@@ -1056,9 +1057,12 @@ export default class CompomentFooter extends React.Component{
 #### 基本用法
 * `$ npm install -S react-router`安装`React-Router`，最新的为`React-Router4`。
 
-## 10-01
+#### 使用案例
+* 在`src/js`创建入口文件`root.js`
+* 在webpack中把
+## 10-02
 ### React Router参数传递
-*
+* 
 
 # 知识扩展
 ## 00-01
