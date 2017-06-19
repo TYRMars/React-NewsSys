@@ -30,7 +30,7 @@ switchHeader(){
 				<ul>
 					<li><Link to={`/`}>首页</Link></li>
 					<li><Link to={`/details`}>嵌套的详情页面</Link></li>
-					<li><Link to={`/list`}>列表页面</Link></li>
+					<li><Link to={`/list/12341234`}>列表页面</Link></li>
 				</ul>
 			</header>
 		)

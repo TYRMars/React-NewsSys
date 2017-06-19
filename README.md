@@ -6,7 +6,7 @@
 * 慕课网：React.js入门与案例开发
 * 《React全栈-Redux+Flux+webpack+Babel整合开发》  
 
-## 目录
+## 知识点目录
 
 * [01-01](https://github.com/TYRMars/ReactLearn#01-01) `基础知识目录与相关版本`
 * [02-01](https://github.com/TYRMars/ReactLearn#02-01) `React简介`
@@ -42,7 +42,14 @@
 * [09-05](https://github.com/TYRMars/ReactLearn#09-05) `React Ant Design 样式框架介绍`
 * [09-05](https://github.com/TYRMars/ReactLearn#09-05) `React Ant Design 样式框架使用`
 * [10-01](https://github.com/TYRMars/ReactLearn#10-01) `React Rouder概念`
-* [10-02](https://github.com/TYRMars/ReactLearn#10-01) `React Rouder参数传递`
+* [10-02](https://github.com/TYRMars/ReactLearn#10-02) `React Rouder参数传递`
+---
+
+## 项目开发目录
+* [11-01](https://github.com/TYRMars/ReactLearn#11-01) `项目初始化`
+* [11-02](https://github.com/TYRMars/ReactLearn#11-02) `Ant Design框架引入`
+---
+
 * [—————](https://github.com/TYRMars/ReactLearn#知识扩展) `知识扩展`
 * [00-01](https://github.com/TYRMars/ReactLearn#00-01) `JSX的来历`
 -----------------------------------------------------------------------------------------------
@@ -1056,14 +1063,53 @@ export default class CompomentFooter extends React.Component{
 * 路由库`React-Router`。它是官方维护的，事实上也是唯一可选的路由库。它通过管理 `URL`，实现组件的切换和状态的变化，开发复杂的应用几乎肯定会用到。
 #### 基本用法
 * `$ npm install -S react-router`安装`React-Router`，最新的为`React-Router4`。
+```JavaScript
+import React from 'react';
+import ReactDOM from 'react-dom';
+import Index from './index';
+import ComponentList from './components/list';
+import ComponentDetails from './components/details';
+import {Router,Route,hashHistory} from 'react-router';
 
+export default class Root extends React.Component{
+  render(){
+    return (
+      //这里替换了之前的 Index，变成了程序的入口
+      <Router history={hashHistory}>
+
+        <Route component={Index} path="/">
+          <Route component={ComponentDetails} path="details"></Route>
+        </Route>
+
+        <Route component={ComponentList} path="list"></Route>
+
+      </Router>
+    );
+  };
+}
+
+ReactDOM.render(<Root/>, document.getElementById('example'));
+
+```
+* 跳转时使用`<Link>`进行跳转
 #### 使用案例
 * 在`src/js`创建入口文件`root.js`
 * 在webpack中把
+
 ## 10-02
 ### React Router参数传递
-* 
+* 从`Header`中跳转到`list`传递数值。
+* 利用在`root.js`中设置`<Route component={ComponentList} path="list"></Route>`中`path="list/id:"`。这个为定义的方法
+* 在`list`中用`{this.props.params.id}`获取从`Header`路由传递过来的值
+* `Header`中使用`<Link to={``/list/12341234``}>`
 
+## 11-01
+### 项目初始化
+* 注重项目目录命名的规范！！！！
+
+---
+# 项目实现----------使用Ant Design
+## 11-01
 # 知识扩展
 ## 00-01
 ### JSX的来历
