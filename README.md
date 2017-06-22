@@ -48,6 +48,9 @@
 ## 项目开发目录
 * [11-01](https://github.com/TYRMars/ReactLearn#11-01) `项目初始化`
 * [11-02](https://github.com/TYRMars/ReactLearn#11-02) `Ant Design框架引入`
+* [11-03](https://github.com/TYRMars/ReactLearn#11-03) `头条新闻的数据接口简介`
+* [11-04](https://github.com/TYRMars/ReactLearn#11-04) `测试环境介绍`
+* [12-01](https://github.com/TYRMars/ReactLearn#12-01) `PC端页头组件开发`
 ---
 
 * [—————](https://github.com/TYRMars/ReactLearn#知识扩展) `知识扩展`
@@ -1112,8 +1115,48 @@ ReactDOM.render(<Root/>, document.getElementById('example'));
 
 ## 11-02
 ### Ant Design框架引入
+* 通过NPM方法导入`AntDesign`
+* `sudo npm install antd --save`来安装到目录。
+* 测试一下,在root.js中，书写如下
+```JavaScript
+import React from 'react';
+import ReactDOM from 'react-dom';
+import {Router, Route, hashHistory} from 'react-router';
+import {Button} from 'antd';
+import 'antd/dist/antd.css'
 
+export default class Root extends React.Component {
+  render() {
+    return (
+      <div>
+        <Button type="primary">Primary</Button>
+        <Button>Default</Button>
+        <Button type="dashed">Dashed</Button>
+        <Button type="danger">Danger</Button>
+      </div>
+    );
+  };
+}
 
+ReactDOM.render(
+  <Root/>, document.getElementById('mainContainer'));
+
+```
+
+## 11-03
+### 头条新闻的数据接口简介
+* 采用Postman来管理接口
+* [Postman](https://www.getpostman.com/apps)
+
+## 11-04
+### 测试环境介绍
+* 使用Chrome 的开发调试工具
+
+## 12-01
+### PC端页头组件开发
+* 下载头部图标[ICONFINDER](https://www.iconfinder.com)
+* 采用栅格与FLEX布局
+* 头部组件采用`Menu`控件，子元素为`Menu.Item`
 
 # 知识扩展
 ## 00-01
