@@ -1158,6 +1158,42 @@ ReactDOM.render(
 * 采用栅格与FLEX布局
 * 头部组件采用`Menu`控件，子元素为`Menu.Item`
 
+## 12-02
+### 移动端页头组件开发
+* 移动端响应式布局，采用`react-response`，`npm`一下。
+```JavaScript
+import React from 'react';
+import ReactDOM from 'react-dom';
+import {Router, Route, hashHistory} from 'react-router';
+import {Button} from 'antd';
+import 'antd/dist/antd.css';
+import PCIndex from './components/pc_index';
+import MBIndex from './components/mb_index';
+import MediaQuery from 'react-responsive';
+export default class Root extends React.Component {
+  render() {
+    return (
+      <div>
+        <MediaQuery query='(min-device-width:1224px)'>
+          <PCIndex/>
+        </MediaQuery>
+        <MediaQuery query='(max-device-width:1224px)'>
+          <MBIndex />
+        </MediaQuery>
+      </div>
+    );
+  };
+}
+
+ReactDOM.render(
+  <Root/>, document.getElementById('mainContainer'));
+
+```
+* 在`index.html`中记得书写✍️`meta标签`，帮助识别响应式布局
+```HTML
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+```
+
 # 知识扩展
 ## 00-01
 ### JSX的来历
