@@ -1,0 +1,24 @@
+html{
+  font-size: 50px;
+}
+
+#mbheader{
+  flex: 1;
+  background: #f6f6f6;
+}
+
+#mbheader header{
+  border-bottom: 1px solid #2db7f5;
+  padding-left: 10px;
+}
+
+#mbheader header img {
+  height: 50px;
+}
+
+#mbheader header span{
+  font-size: 35px;
+  vertical-align: top;
+  padding: 10px;
+  color: #2db7f5;
+}
