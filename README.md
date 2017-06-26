@@ -51,6 +51,9 @@
 * [11-03](https://github.com/TYRMars/ReactLearn#11-03) `头条新闻的数据接口简介`
 * [11-04](https://github.com/TYRMars/ReactLearn#11-04) `测试环境介绍`
 * [12-01](https://github.com/TYRMars/ReactLearn#12-01) `PC端页头组件开发`
+* [12-02](https://github.com/TYRMars/ReactLearn#12-02) `移动端页头组件开发`
+* [12-03](https://github.com/TYRMars/ReactLearn#12-03) `PC端页脚组件开发`
+* [12-04](https://github.com/TYRMars/ReactLearn#12-04) `移动端页脚组件开发`
 ---
 
 * [—————](https://github.com/TYRMars/ReactLearn#知识扩展) `知识扩展`
@@ -1192,6 +1195,51 @@ ReactDOM.render(
 * 在`index.html`中记得书写✍️`meta标签`，帮助识别响应式布局
 ```HTML
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+```
+
+## 12-03
+### PC端页脚开发
+* 在`pc_footer.js`中写入代码,填写相应的
+```JavaScript
+import React from 'react';
+import {Row,Col} from 'antd';
+export default class PCFooter extends React.Component {
+  render(){
+    return(
+      <footer>
+        <Row>
+          <Col span={2}></Col>
+          <Col span={20}>
+            &copy;&nbsp;2016 ReactNews. All Right Reserved.
+          </Col>
+          <Col span={2}></Col>
+        </Row>
+      </footer>
+    )
+  }
+}
+```
+## 12-04
+### 移动端页脚组件开发
+* 在`mb_footer.js`中写入代码
+```JavaScript
+import React from 'react';
+import {Row,Col} from 'antd';
+export default class MBFooter extends React.Component {
+  render(){
+    return(
+      <footer>
+        <Row>
+          <Col span={2}></Col>
+          <Col span={20}>
+            &copy;&nbsp;2016 ReactNews. All Right Reserved.
+          </Col>
+          <Col span={2}></Col>
+        </Row>
+      </footer>
+    )
+  }
+}
 ```
 
 # 知识扩展
