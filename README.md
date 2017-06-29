@@ -58,6 +58,7 @@
 * [12-02](https://github.com/TYRMars/ReactLearn#12-02) `移动端页头组件开发`
 * [12-03](https://github.com/TYRMars/ReactLearn#12-03) `PC端页脚组件开发`
 * [12-04](https://github.com/TYRMars/ReactLearn#12-04) `移动端页脚组件开发`
+* [13-01](https://github.com/TYRMars/ReactLearn#13-01) `注册功能模块（上）`
 ---
 
 * [—————](https://github.com/TYRMars/ReactLearn#知识扩展) `知识扩展`
@@ -1245,6 +1246,12 @@ export default class MBFooter extends React.Component {
   }
 }
 ```
+
+## 13-01
+### 注册功能模块（上）
+* 采用`fech`框架进行开发
+* `npm install fech`
+* 
 
 # 知识扩展
 ## 00-01
