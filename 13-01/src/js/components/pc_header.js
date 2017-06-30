@@ -1,9 +1,10 @@
 import React from 'react';
 import {Row,Col} from 'antd';
-import {Menu,Icon,Tabs,message,Form,Input,Button,CheckBox} from 'antd';
+import {Menu,Icon,Tabs,message,Form,Input,Button,CheckBox,Modal} from 'antd';
 const FormItem = Form.Item;
 const SubMenu = Menu.SubMenu;
 const MenuItemGroup = Menu.ItemGroup;
+const TabPane = Tabs.TabPane;
 
 class PCHeader extends React.Component {
   constructor(){
@@ -16,7 +17,24 @@ class PCHeader extends React.Component {
       userNickName:'',
       userid:0
     }
-  }
+  };
+  //设置可视化
+  setModalVisible(value){
+    this.setState({modalVisible:value});
+  };
+  //
+  handleClick(e){
+    if(e.key="register"){
+      this.setState({current:'register'});
+      this.setModalVisible(true);
+    }else{
+      {this.setState(current:e.key);}
+    }
+  };
+  //
+  handleSubmit(e){
+    //页面向API进行提交数据
+  };
 
   render(){
     let {getFieldProps} = this.props.form;
@@ -46,7 +64,7 @@ class PCHeader extends React.Component {
             </a>
           </Col>
           <Col span={16}>
-            <Menu mode="horizontal" selectedKeys={[this.state.current]}>
+            <Menu mode="horizontal" onClick={this.handleClick.bind(this)} selectedKeys={[this.state.current]}>
               <Menu.Item key="top">
                 <Icon type="appstore"/>头条
               </Menu.Item>
@@ -73,9 +91,24 @@ class PCHeader extends React.Component {
               </Menu.Item>
               {userShow}
             </Menu>
-            <Model title="用户中心" wrapClassName="vertival-center-model" visible={this.state.modelVisible} onCancel = {() => this.setModelVisible(false)} onOK={()=>this.setModelVisible(false) okText="关闭"}>
-              
-            </Model>
+            <Modal title="用户中心" wrapClassName="vertival-center-model" visible={this.state.modelVisible} onCancel = {() => this.setModalVisible(false)} onOk={()=>this.setModalVisible(false)} okText="关闭">
+              <Tabs type="card">
+                <TabPane>
+                <Form horizontal onSubmit={this.handleSubmit.bind(this)}>
+                  <FormItem label="账户">
+                    <Input placeholder="请输入您的账号" {...getFieldDecorator('r_userName')}/>
+                  </FormItem>
+                  <FormItem label="密码">
+                    <Input type="password" placeholder="请输入您的密码" {...getFieldDecorator('r_password')}/>
+                  </FormItem>
+                  <FormItem label="确认密码">
+                    <Input type="password" placeholder="请再次输入您的密码" {...getFieldDecorator('r_confirmPassword')}/>
+                  </FormItem>
+                  <Button type="primary" htmlType="submit">注册</Button>
+                </Form>
+                </TabPane>
+              </Tabs>
+            </Modal>
           </Col>
           <Col span={2}></Col>
         </Row>
