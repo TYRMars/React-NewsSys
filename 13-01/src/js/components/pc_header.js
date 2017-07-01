@@ -11,7 +11,7 @@ class PCHeader extends React.Component {
     super();
     this.state = {
       current:'top',
-      modelVisible:false,
+      modalVisible:false,
       action:'login',
       hasLogined:false,
       userNickName:'',
@@ -37,7 +37,7 @@ class PCHeader extends React.Component {
   };
 
   render(){
-    let {getFieldProps} = this.props.form;
+    let {getFieldDecorator} = this.props.form;
     const userShow = this.state.hasLogined
     ?
     <Menu.Item key="logout" class="register">
