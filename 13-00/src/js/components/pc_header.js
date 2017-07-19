@@ -41,6 +41,7 @@ class PCHeader extends React.Component {
 			}
 		}
 	};
+	
 	handleSubmit(e)
 	{
 		//页面开始向 API 进行提交数据
@@ -86,7 +87,7 @@ class PCHeader extends React.Component {
 					<Col span={16}>
 						<Menu mode="horizontal" onClick={this.handleClick.bind(this)} selectedKeys={[this.state.current]}>
 							<Menu.Item key="top">
-								<Icon type="appstore"/>头条
+								<Icon type="appstore" />头条
 							</Menu.Item>
 							<Menu.Item key="shehui">
 								<Icon type="appstore"/>社会
