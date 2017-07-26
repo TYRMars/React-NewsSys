@@ -15,6 +15,7 @@ const FormItem = Form.Item;
 const SubMenu = Menu.SubMenu;
 const TabPane = Tabs.TabPane;
 const MenuItemGroup = Menu.ItemGroup;
+import {Router,Route,Link,browserHistory} from 'react-router';
 class PCHeader extends React.Component {
 	constructor() {
 		super();
@@ -80,9 +81,9 @@ class PCHeader extends React.Component {
 			? <Menu.Item key="logout" class="register">
 					<Button type="primary" htmlType="button">{this.state.userNickName}</Button>
 					&nbsp;&nbsp;
-					{/*<Link target="_blank">*/}
+					<Link target="_blank">
 						<Button type="dashed" htmlType="button">个人中心</Button>
-					{/*</Link>*/}
+					</Link>
 					&nbsp;&nbsp;
 					<Button type="ghost" htmlType="button">退出</Button>
 				</Menu.Item>
