@@ -94,13 +94,13 @@
 * 相关知识请看我的博客前端开发基础知识部分[科技干货-Blog](http://www.kejiganhuo.tech)
 
 ## 02-03
-### 其他知识梳理-利用babel把ES5转化为ES6
+### 其他知识梳理-利用babel把ES6转化为ES5
 * 安装`babel`
 * ` sudo npm install --save-dev babel-cli babel-preset-env`
 * ES6语法，因为很多浏览器还不支持ES6所以需要进行转换
 ``` javascript
   add(items){
-    items.map(item => item +1)
+    items.map(item => item + 1)
   }
 ```
 * 在`package.json`中，通过以下设置来实现转换
@@ -1251,7 +1251,7 @@ export default class MBFooter extends React.Component {
 ### 注册功能模块（上）
 * 采用`fech`框架进行开发
 * `npm install fech`
-* 
+*
 
 # 知识扩展
 ## 00-01
