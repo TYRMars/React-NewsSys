@@ -680,6 +680,7 @@ export default class BodyIndex extends React.Component {
 }
 ```
 * 可以用Chorme React组件中查看到`state`只会在相应的模块中有值，不会影响到其他模块。它属于模块自身属性。
+
 ## 08-02
 ### Props属性
 
@@ -726,9 +727,11 @@ export default class BodyIndex extends React.Component {
 }
 ```
 * 可以用`Chorme React`组件中查看到，`Props`相当于跨组件传值，而且优点在于不会影响其他模块的值。`Props`对于模块本身来说属于外来属性。
+
 ## 08-03
 ### 事件与数据的双向绑定
 * bodyIndex.js代码
+
 ```JavaScript
 import React from 'react';
 import BodyChild from './bodychild'
@@ -763,7 +766,9 @@ export default class BodyIndex extends React.Component {
 }
 
 ```
+
 * bodychild.js代码
+
 ```JavaScript
 import React from 'react';
 export default class BodyChild extends React.Component{
@@ -776,13 +781,14 @@ export default class BodyChild extends React.Component{
     )
   }
 }
-
 ```
+
 * 通过在子页面`BodyChild`设置`props`，子页面`value`改变调用`handleChildValueChange`，传值到父页面`bodyIndex`。也就是说在子页面中通过调用父页面传递过来的事件props进行组件间的参数传递。
 * 思考（onChange与onBlur）的对比。
 * `ES6`的语法注意
   * 函数绑定方法this ：`this.forceUpdateHander = this.forceUpdateHander.bind(this)`
   * 或者调用时绑定：`onClick={this.changeUserInfo.bind(this,50)}`
+
 ## 08-04
 ### 可复用组件
 * 类定义完后，追加属性`propTypes`传入参数`userid:React.PropTypes.number`，规定userid是一个数字型，如果传入字符型和其他的非数字型，都会报错。
@@ -838,6 +844,7 @@ BodyIndex.propTypes = {
 BodyIndex.defaultProps = defaultProps;
 
 ```
+
 ## 08-05
 ### 组件Refs(操作DOM的2⃣️两种方法)
 * 第一种方式
@@ -930,7 +937,6 @@ export default class CompomentHeader extends React.Component{
 
 ## 09-02
 #### 內联式样中的表达式
-*
 ```JavaScript
 import React from 'react';
 export default class CompomentHeader extends React.Component{
@@ -967,9 +973,9 @@ export default class CompomentHeader extends React.Component{
 }
 
 ```
+
 ## 09-03
 #### CSS模块化
-*
 * `"babel-plugin-react-html-attrs": "^2.0.0"`让JSX中`className`能变回原来`class`
 * webpack要重新配置
 ```JavaScript
@@ -1117,6 +1123,7 @@ ReactDOM.render(<Root/>, document.getElementById('example'));
 
 ---
 # 项目实现----------使用Ant Design
+
 ## 11-01
 ### 项目初始化
 * 注重项目目录命名的规范！！！！
@@ -1251,7 +1258,6 @@ export default class MBFooter extends React.Component {
 ### 注册功能模块（上）
 * 采用`fech`框架进行开发
 * `npm install fech`
-*
 
 # 知识扩展
 ## 00-01
@@ -1259,3 +1265,43 @@ export default class MBFooter extends React.Component {
 * 下面是一段官方文档中的引用，它可以解释JSX这种写法诞生的初衷
 `We strongly believe that components are the right way to separate concerns rather than "templates" and "display logic" . We think that markup and the code that generate it are intimately tied together . Additionally , display logic is often very complex and using template languages to express it becomes cumbersome`
 * 多年以来，在传统的开发中，把模版和功能分离看作是最佳事件的完美例子，翻阅形形色色的框架文档，总有一个模版文件夹里放置了对应的模版文件，然后通过模版引擎处理这些字符，来生成把数据和模版结合起来的字符。而React认为世界是基于组件的，组件自然而然和模版相连，把逻辑和模版分开放置是一种笨重的思路，所以React创造了一种名为JSX的语法格式来架起它们之间的桥梁。
+
+## 00-02
+## React 虚拟DOM+components+生命周期的联系
+### React-虚拟DOM分析
+* 从浏览器渲染角度说React为什么会使用虚拟DOM
+* 虚拟DOM的原理
+
+* 以下是综各个资料后的个人理解，如有问题请指出
+
+####  从浏览器渲染角度说为什么会使用虚拟DOM
+* 首先要知道`React`是由`Facebook`对现有业务进行改进提升的时候提出来的。`DOM`是很慢的，其元素非常庞大，页面的性能问题鲜有由JS引起的，大部分都是由DOM操作引起的。所有`Facebook`在`React`中引入了页面UI组件化、虚拟DOM，来解决这些问题。
+* React.js对常用组建进行了优化,它算是一个components组件库。ReactDom.js
+* 如果要渲染到最后Display显示，需要经过很长过程，浏览器会先收集到HTML和CSS，对HTML和CSS分别经过Parser剖析器，分别生成DOMTree和CSSRuleTree。 DOM和CSSOM合并后生成Render Tree。
+* React.js希望用JSX语言写出HTML和CSS还有页面逻辑混合在一起成为一个component，（在react编写的时候就是通过class继承的react.component这个类），直接通过JS对象的形式生成了`ReactRenderTree`，`ReactRenderTree`（React生命周期）在通过虚拟DOM（ReactDom.js），首次生成给到浏览器的时候就是一个浏览器直接可以识别的RenderRenderTree，浏览器直接Painting，然后显示在页面上。
+* 虚拟的DOM的核心思想是：对复杂的文档DOM结构，提供一种方便的工具，进行最小化地DOM操作
+
+```
+```
+
+##### 当需要重排时Reflow
+* `React`会通过虚拟`DOM`对新生成的DOM和原来的DOM树进行对比，改变页面
+
+#### 虚拟DOM的原理
+* 虚拟`DOM`类似于（自动化控制的网页生成器）通过`Node`节点`render`生成相对应的网页，但主要功能在于网页更新时候，对于Node节点的更新，虚拟DOM会比较两棵DOM树的区别，保证最小化的DOM操作，使得执行效率得到保证。
+* 由于计算两棵树的常规算法是`O(n^3)`级别，DOM结构达到成百个节点在实际项目中很正常，所以需要优化深度遍历的算法。
+##### React diff 策略
+* `Web UI` 中 `DOM` 节点跨层级的移动操作特别少，可以忽略不计。
+* 拥有相同类的两个组件将会生成相似的树形结构，拥有不同类的两个组件将会生成不同的树形结构。
+* 对于同一层级的一组子节点，它们可以通过唯一 id 进行区分。
+* 基于以上三个前提策略，`React` 分别对 `tree diff`、`component diff` 以及 `element diff` 进行算法优化，事实也证明这三个前提策略是合理且准确的，它保证了整体界面构建的性能。
+
+<p align="center"><img src="https://pic3.zhimg.com/74a86fbcc8bb4ad74e19b72a72b26c56_r.png" /></p>
+
+[知乎-React 源码剖析系列 － 不可思议的 react diff](https://zhuanlan.zhihu.com/p/20346379)
+
+### React-生命周期
+* `ReactNode`节点是由JS制作而成，本身是死的，要赋予其活性，就需要像现实事物一样有生命周期。通过生命周期函数，来间接控制事件与DOM的操作！！！
+* 为了方便这样的操作React有了JSX这种语法融合了`HTML`和`CSS`，不难看出使用这种语法能极大的提高React性能（从浏览器渲染的角度）
+
+<p align="center"><img src="http://upload-images.jianshu.io/upload_images/1814354-4bf62e54553a32b7.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" /></p>
