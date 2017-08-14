@@ -1274,11 +1274,11 @@ export default class MBFooter extends React.Component {
 
 * 以下是综各个资料后的个人理解，如有问题请指出
 
-####  从浏览器渲染角度说为什么会使用虚拟DOM
+####  从浏览器渲染角度说React
 * 首先要知道`React`是由`Facebook`对现有业务进行改进提升的时候提出来的。`DOM`是很慢的，其元素非常庞大，页面的性能问题鲜有由JS引起的，大部分都是由DOM操作引起的。所有`Facebook`在`React`中引入了页面UI组件化、虚拟DOM，来解决这些问题。
-* React.js对常用组建进行了优化,它算是一个components组件库。ReactDom.js
+* React.js对常用组建进行了优化,它算是一个components组件库。ReactDom.js是React版本优化的虚拟DOM
 * 如果要渲染到最后Display显示，需要经过很长过程，浏览器会先收集到HTML和CSS，对HTML和CSS分别经过Parser剖析器，分别生成DOMTree和CSSRuleTree。 DOM和CSSOM合并后生成Render Tree。
-* React.js希望用JSX语言写出HTML和CSS还有页面逻辑混合在一起成为一个component，（在react编写的时候就是通过class继承的react.component这个类），直接通过JS对象的形式生成了`ReactRenderTree`，`ReactRenderTree`（React生命周期）在通过虚拟DOM（ReactDom.js），首次生成给到浏览器的时候就是一个浏览器直接可以识别的RenderRenderTree，浏览器直接Painting，然后显示在页面上。
+* React.js希望用JSX语言写出HTML和CSS还有页面逻辑混合在一起成为一个component，（在react编写的时候就是通过class继承的react.component这个类），直接通过JS对象的形式生成了`ReactRenderTree`，我觉得这是原型链的🌲树状结构化，`ReactRenderTree`（React生命周期）在通过虚拟DOM（ReactDom.js），首次生成给到浏览器的时候就是一个浏览器直接可以识别的RenderTree，浏览器直接Painting，然后显示在页面上。
 * 虚拟的DOM的核心思想是：对复杂的文档DOM结构，提供一种方便的工具，进行最小化地DOM操作
 
 ```
@@ -1295,6 +1295,8 @@ export default class MBFooter extends React.Component {
 * 拥有相同类的两个组件将会生成相似的树形结构，拥有不同类的两个组件将会生成不同的树形结构。
 * 对于同一层级的一组子节点，它们可以通过唯一 id 进行区分。
 * 基于以上三个前提策略，`React` 分别对 `tree diff`、`component diff` 以及 `element diff` 进行算法优化，事实也证明这三个前提策略是合理且准确的，它保证了整体界面构建的性能。
+
+* React的局限性，不适合每个页面使用率很低网站，（每个页面页面逻辑不同）;
 
 <p align="center"><img src="https://pic3.zhimg.com/74a86fbcc8bb4ad74e19b72a72b26c56_r.png" /></p>
 
