@@ -12,41 +12,70 @@
 
 ## 知识点目录
 
+### 01
+
 * [01-01](https://github.com/TYRMars/ReactLearn#01-01) `基础知识目录与相关版本`
+
+### 02
+
 * [02-01](https://github.com/TYRMars/ReactLearn#02-01) `React简介`
 * [02-02](https://github.com/TYRMars/ReactLearn#02-02) `其他知识梳理`
 * [02-03](https://github.com/TYRMars/ReactLearn#02-03) `其他知识梳理-利用babel把ES5转化为ES6`
+
+### 03
+
 * [03-01](https://github.com/TYRMars/ReactLearn#03-01) `React版本选择`
 * [03-02](https://github.com/TYRMars/ReactLearn#03-02) `React Starter Pack 下载使用与React初体验`
+
+### 04
+
 * [04-01](https://github.com/TYRMars/ReactLearn#04-01) `NodeJS简介`
 * [04-02](https://github.com/TYRMars/ReactLearn#04-02) `NodeJS安装`
 * [04-03](https://github.com/TYRMars/ReactLearn#04-03) `NPM配置国内源`
+
+### 05
+
 * [05-01](https://github.com/TYRMars/ReactLearn#05-01) `使用NPM配置React`
 * [05-02](https://github.com/TYRMars/ReactLearn#05-02) `WebPack 热加载配置(上)`
 * [05-03](https://github.com/TYRMars/ReactLearn#05-03) `WebPack 热加载配置(中)`
 * [05-04](https://github.com/TYRMars/ReactLearn#05-04) `WebPack 热加载配置(下)`
 * [05-05](https://github.com/TYRMars/ReactLearn#05-05) `ChromeReact插件使用`
+
+### 06
+
 * [06-01](https://github.com/TYRMars/ReactLearn#06-01) `开发工具 Atom`
 * [06-02](https://github.com/TYRMars/ReactLearn#06-02) `React开发相关Atom插件配置`
+
+### 07
+
 * [07-01](https://github.com/TYRMars/ReactLearn#07-01) `React虚拟DOM概念`
 * [07-02](https://github.com/TYRMars/ReactLearn#07-02) `React组件`
 * [07-03](https://github.com/TYRMars/ReactLearn#07-03) `React多组件嵌套`
 * [07-04](https://github.com/TYRMars/ReactLearn#07-04) `JSX内置表达式`
 * [07-05](https://github.com/TYRMars/ReactLearn#07-05) `生命周期`
+
+### 08
+
 * [08-01](https://github.com/TYRMars/ReactLearn#08-01) `State属性`
 * [08-02](https://github.com/TYRMars/ReactLearn#08-02) `Props属性`
 * [08-03](https://github.com/TYRMars/ReactLearn#08-03) `事件与数据的双向绑定`
 * [08-04](https://github.com/TYRMars/ReactLearn#08-04) `可复用组件`
 * [08-05](https://github.com/TYRMars/ReactLearn#08-05) `组件Refs(操作DOM的二种方法)`
 * [08-06](https://github.com/TYRMars/ReactLearn#08-06) `独立组件间共享 Mixins`
+
+### 09
+
 * [09-01](https://github.com/TYRMars/ReactLearn#09-01) `React 內联式样`
 * [09-02](https://github.com/TYRMars/ReactLearn#09-02) `React 內联式样中的表达式`
 * [09-03](https://github.com/TYRMars/ReactLearn#09-03) `React CSS模块化`
 * [09-04](https://github.com/TYRMars/ReactLearn#09-04) `React JSX样式与CSS的转换`
 * [09-05](https://github.com/TYRMars/ReactLearn#09-05) `React Ant Design 样式框架介绍`
 * [09-05](https://github.com/TYRMars/ReactLearn#09-05) `React Ant Design 样式框架使用`
+
+### 10
 * [10-01](https://github.com/TYRMars/ReactLearn#10-01) `React Rouder概念`
 * [10-02](https://github.com/TYRMars/ReactLearn#10-02) `React Rouder参数传递`
+
 ---
 
 ## 项目开发目录
@@ -63,6 +92,7 @@
 
 * [—————](https://github.com/TYRMars/ReactLearn#知识扩展) `知识扩展`
 * [00-01](https://github.com/TYRMars/ReactLearn#00-01) `JSX的来历`
+* [00-02](https://github.com/TYRMars/ReactLearn#00-02) `关于React的想法💡`
 -----------------------------------------------------------------------------------------------
 
 
@@ -1278,11 +1308,9 @@ export default class MBFooter extends React.Component {
 * 首先要知道`React`是由`Facebook`对现有业务进行改进提升的时候提出来的。`DOM`是很慢的，其元素非常庞大，页面的性能问题鲜有由JS引起的，大部分都是由DOM操作引起的。所有`Facebook`在`React`中引入了页面UI组件化、虚拟DOM，来解决这些问题。
 * React.js对常用组建进行了优化,它算是一个components组件库。ReactDom.js是React版本优化的虚拟DOM
 * 如果要渲染到最后Display显示，需要经过很长过程，浏览器会先收集到HTML和CSS，对HTML和CSS分别经过Parser剖析器，分别生成DOMTree和CSSRuleTree。 DOM和CSSOM合并后生成Render Tree。
-* React.js希望用JSX语言写出HTML和CSS还有页面逻辑混合在一起成为一个component，（在react编写的时候就是通过class继承的react.component这个类），直接通过JS对象的形式生成了`ReactRenderTree`，我觉得这是原型链的🌲树状结构化，`ReactRenderTree`（React生命周期）在通过虚拟DOM（ReactDom.js），首次生成给到浏览器的时候就是一个浏览器直接可以识别的RenderTree，浏览器直接Painting，然后显示在页面上。
+* React.js希望用JSX语言写出HTML和CSS还有页面逻辑混合在一起成为一个component，（在react编写的时候就是通过class继承的react.component这个类），直接通过JS对象的形式生成了`ReactRenderTree`。
+* 我觉得这是原型链的🌲树状结构化，`ReactRenderTree`（React生命周期）在通过虚拟DOM（ReactDom.js），首次生成给到浏览器的时候就是一个浏览器直接可以识别的RenderTree，浏览器直接Painting，然后显示在页面上。
 * 虚拟的DOM的核心思想是：对复杂的文档DOM结构，提供一种方便的工具，进行最小化地DOM操作
-
-```
-```
 
 ##### 当需要重排时Reflow
 * `React`会通过虚拟`DOM`对新生成的DOM和原来的DOM树进行对比，改变页面
