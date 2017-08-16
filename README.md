@@ -7,8 +7,7 @@
 * 《React全栈-Redux+Flux+webpack+Babel整合开发》
 * [Redux中文文档](http://cn.redux.js.org/)
 * [React Router](http://react-guide.github.io/react-router-cn/docs/API.html)
-* [React Router4中文文档](https://reacttraining.cn/web/guides/quick-start)
-* [React Training中文](https://reacttraining.cn)
+* [React Router 4中文文档](http://618cj.com/react-router4-0路由中文文档api/)
 
 ## 知识点目录
 
