@@ -1,5 +1,6 @@
-<h1 align="center">React新闻网站</h1>
-<p align="center"><img src="http://www.kejiganhuo.tech/wp-content/uploads/2017/06/bg2015033101.png" /></p>
+# React新闻网站
+
+![react](http://www.kejiganhuo.tech/wp-content/uploads/2017/06/bg2015033101.png)
 
 # Ant Design样式框架使用
 * [ANT DESIGH](http://ant.design/index-cn)
